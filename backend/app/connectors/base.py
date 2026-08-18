@@ -163,6 +163,22 @@ class ConnectorResult(BaseModel):
 # --------------------------------------------------------------------------- #
 
 
+def _render_size(package) -> str | None:
+    """Describe a parsed package concisely.
+
+    Used when a retailer supplies no dedicated size field and the size had to be
+    recovered from the title. Echoing the whole title back as the "size" would be
+    useless to a shopper comparing packages.
+    """
+    if not package.is_parsed:
+        return None
+    if package.pack_count > 1 and package.unit_quantity:
+        return f"{package.pack_count} x {package.unit_quantity}"
+    if package.unit_quantity:
+        return str(package.unit_quantity)
+    return str(package.total_base)
+
+
 class BaseRetailerConnector(ABC):
     """Template for every retailer adapter.
 
@@ -277,7 +293,7 @@ class BaseRetailerConnector(ABC):
             brand=brand or None,
             normalized_brand=normalize_brand(brand),
             category=category,
-            size_text=size_text or (package.raw_text if package.is_parsed else None),
+            size_text=size_text or _render_size(package),
             pack_count=package.pack_count,
             net_content_value=(
                 package.unit_quantity.value if package.unit_quantity else None

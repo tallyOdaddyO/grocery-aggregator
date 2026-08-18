@@ -4,7 +4,7 @@ Append-only status file. Updated at the end of every phase so context is never l
 
 **Target ZIP:** 33009 (Hallandale Beach, FL)
 **Current phase:** 5 — Core APIs
-**Last updated:** 2026-08-18 (Phase 4 complete)
+**Last updated:** 2026-08-18 (Phase 5 partial: GET /search complete)
 
 ---
 
@@ -217,8 +217,65 @@ Chavez listed as stocking it at no published price.
 **Tests: 245 passing** (up from 175).
 
 
-## Phase 5 — Core APIs ⬜ NOT STARTED
-`GET /search`, `GET /product/{id}`, `POST /compare-basket`.
+## Phase 5 — Core APIs 🟡 IN PROGRESS — `GET /search` complete
+
+### `GET /api/v1/search` ✅ COMPLETE
+
+Implemented to the supplied wire schemas exactly (`app/schemas/search.py`), wired
+straight to the Phase 4 orchestrator. `app/main.py` mounts the router; the service
+is a FastAPI dependency so tests can inject failing connectors.
+
+**Partial failure translation.** `RetailerStatus` maps to `ConnectorStatus`
+(`active`→`ok`), every retailer appears in `connector_health` whether it succeeded
+or not, and `is_complete` is False whenever any retailer failed. A connector that
+raises, times out, or has no local store degrades only itself — the request still
+returns **200**. Verified end to end: against a connector sleeping 3s with a 0.3s
+timeout, the request returns in 0.32s wall clock with `is_complete: false`, Walmart
+`degraded` at 306ms, and seven retailers still returning results.
+
+**Veto enforcement in grouping** (`app/services/grouping.py`). Grouping is stricter
+than pairwise matching: a candidate joins a group only if it matches the
+representative **and** is not vetoed against *any* existing member. One
+physical-attribute veto anywhere excludes the item outright — it can never be
+admitted on a good average score. Sizes already parsed by the adapter are reused
+rather than re-derived, so a group can never contradict the unit prices shown
+inside it. API-level tests assert no group mixes package sizes, and that BJ's/Costco
+club multipacks never share a group with the 12 oz grocery boxes.
+
+**Two bugs found and fixed during this phase:**
+
+1. **`group_id` collided across sizes.** The id was seeded from the UPC, but BJ's
+   ships the 12 oz barcode on a 2 × 20.35 oz club pack — the very UPC-reuse problem
+   the veto system exists for. Two correctly-separated groups received the same id.
+   The seed now always includes the normalized size.
+2. **`"case of 12"` was not recognized as a pack.** Rey Chavez's
+   `"Cheerios 12 oz (case of 12)"` parsed as a single 12 oz box. Added
+   `case of` / `box of` / `caja de` to the pack patterns; it now parses as
+   12 × 12 oz and correctly separates from the retail boxes.
+
+Also fixed: timed-out connectors reported `latency_ms: 0`; they now report the time
+actually spent waiting. And `size_raw` echoed the entire product title when a
+retailer supplied no size field; it now renders the parsed package (`24 x 12 fl oz`).
+
+### ⚠️ Schema fidelity issue — needs a decision
+
+`VerificationMethod` has no slot for **`verified_online`**, which is **18 of 24**
+priced observations — the most common grade the connectors produce (Walmart, BJ's,
+Publix, Winn-Dixie, Fresco y Más all publish store-scoped prices that are real but
+not shelf-verified).
+
+It is currently mapped **down** to `estimated`, never up to `verified_in_store`,
+because overstating verification is the one error this system must never make. The
+exact grade is preserved verbatim in the free-form `PriceProvenance.status`, so
+nothing is lost on the wire — but a client reading only `verification_method`
+cannot distinguish a live Publix ad price from a Presidente circular estimate.
+**Recommendation: add `VERIFIED_ONLINE = "verified_online"` to the enum.**
+
+### Remaining in Phase 5 ⬜ NOT STARTED
+`GET /api/v1/product/{id}` and `POST /api/v1/compare-basket` — deliberately not
+started, per instruction.
+
+**Tests: 269 passing** (up from 245), including 24 FastAPI `TestClient` tests.
 
 ## Phase 6 — Frontend & UI ⬜ NOT STARTED
 Dashboard, Search, Product Detail, Basket. **Blocked on Node/npm install.**

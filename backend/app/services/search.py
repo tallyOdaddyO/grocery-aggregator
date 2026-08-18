@@ -9,6 +9,7 @@ the response.
 from __future__ import annotations
 
 import logging
+import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -103,6 +104,7 @@ class SearchService:
         outcome = SearchOutcome(term=term, zip_code=zip_code)
         if not self.connectors:
             return outcome
+        started = time.perf_counter()
 
         # NOTE: the executor is shut down with wait=False. Using it as a context
         # manager would call shutdown(wait=True) on exit, which blocks until the
@@ -134,6 +136,9 @@ class SearchService:
                                 f"{connector.name} did not respond within "
                                 f"{self.timeout_seconds:g}s."
                             ),
+                            # Report the time actually spent waiting, so a timed
+                            # out retailer does not appear to have replied in 0ms.
+                            elapsed_ms=int((time.perf_counter() - started) * 1000),
                         )
                     )
                     continue
@@ -147,6 +152,7 @@ class SearchService:
                             name=connector.name,
                             status=RetailerStatus.UNAVAILABLE,
                             reason=f"{type(exc).__name__}: {exc}",
+                            elapsed_ms=int((time.perf_counter() - started) * 1000),
                         )
                     )
                     continue

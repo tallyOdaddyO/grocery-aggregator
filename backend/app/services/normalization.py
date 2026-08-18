@@ -37,7 +37,8 @@ _UNIT_ALT = "|".join(re.escape(t) for t in UNIT_TOKENS)
 _QTY_RE = re.compile(rf"({_NUM})\s*-?\s*({_UNIT_ALT})(?![a-z])", re.IGNORECASE)
 
 _PACK_OF_RE = re.compile(
-    rf"\b(?:pack\s+of|paquete\s+de)\s+({_NUM})\b", re.IGNORECASE
+    rf"\b(?:pack\s+of|case\s+of|box\s+of|paquete\s+de|caja\s+de)\s+({_NUM})\b",
+    re.IGNORECASE,
 )
 _N_PACK_RE = re.compile(
     r"\b(\d+)\s*-?\s*(?:packs?|pks?|paquetes?)\b", re.IGNORECASE
