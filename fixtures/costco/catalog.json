@@ -1,0 +1,49 @@
+{
+  "_meta": {
+    "captured_at": "2026-08-18T00:30:00Z",
+    "source": "fixture",
+    "pricing_note": "costco.com pricing; may differ in warehouse"
+  },
+  "products": [
+    {
+      "partNumber": "1642304",
+      "itemName": "Kirkland Signature Organic Whole Milk, 64 fl oz, 6 ct",
+      "brandName": "Kirkland Signature",
+      "itemUPC": "096619462391",
+      "listPrice": "$14.99",
+      "category": "dairy"
+    },
+    {
+      "partNumber": "1119693",
+      "itemName": "Cheerios Original Cereal, 20.35 oz, 2-pack",
+      "brandName": "General Mills",
+      "itemUPC": null,
+      "listPrice": "$9.49",
+      "category": "cereal"
+    },
+    {
+      "partNumber": "1234567",
+      "itemName": "Coca-Cola Classic, 12 fl oz, 36-pack",
+      "brandName": "Coca-Cola",
+      "itemUPC": "049000050103",
+      "listPrice": "$18.99",
+      "category": "beverage"
+    },
+    {
+      "partNumber": "9988776",
+      "itemName": "Skippy Creamy Peanut Butter, 48 oz, 2 ct",
+      "brandName": "Skippy",
+      "itemUPC": "037600106917",
+      "listPrice": "",
+      "category": "pantry"
+    },
+    {
+      "partNumber": "5550001",
+      "itemName": "Member Only Item — see warehouse",
+      "brandName": null,
+      "itemUPC": null,
+      "listPrice": "Call for price",
+      "category": null
+    }
+  ]
+}

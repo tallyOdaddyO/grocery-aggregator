@@ -1,0 +1,12 @@
+{
+  "stores": [
+    {
+      "id": "PS-27",
+      "name": "Presidente Supermarket #27",
+      "city": "Hallandale Beach",
+      "state": "FL",
+      "zip": "33009",
+      "addressVerified": false
+    }
+  ]
+}

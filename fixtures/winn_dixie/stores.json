@@ -1,0 +1,12 @@
+{
+  "stores": [
+    {
+      "storeId": "0331",
+      "banner": "Winn-Dixie",
+      "city": "Hallandale Beach",
+      "state": "FL",
+      "postal": "33009",
+      "addressVerified": false
+    }
+  ]
+}

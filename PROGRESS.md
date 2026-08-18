@@ -3,8 +3,8 @@
 Append-only status file. Updated at the end of every phase so context is never lost.
 
 **Target ZIP:** 33009 (Hallandale Beach, FL)
-**Current phase:** 4 — Retailer Connectors (fixture-driven)
-**Last updated:** 2026-08-18 (Phase 3 complete)
+**Current phase:** 5 — Core APIs
+**Last updated:** 2026-08-18 (Phase 4 complete)
 
 ---
 
@@ -150,8 +150,72 @@ hand were also wrong in the 4th decimal; they were re-derived from primary unit
 definitions and cross-checked against the 16 oz = 1 lb and 128 fl oz = 1 gal
 identities, independently of the parser, so the tests can genuinely falsify it.
 
-## Phase 4 — Retailer Connectors (fixture-driven) ⬜ NEXT
-`BaseRetailerConnector` + 8 adapters, realistic fixtures, partial-failure isolation.
+## Phase 4 — Retailer Connectors (fixture-driven) ✅ COMPLETE
+
+**Strict contract** (`app/connectors/base.py`). Adapters implement three narrow
+hooks — `resolve_store`, `fetch_raw`, `parse_item` — and the base class owns
+`search()` entirely, so no adapter can skip store resolution, skip normalization,
+or let an exception escape. `parse_item` returning anything other than a
+`NormalizedProduct` raises `ConnectorContractError`; there is a test that leaks a
+raw dict to prove the guard fires. Every adapter funnels through `build_product()`,
+which runs the Phase 3 normalizers, so no retailer can invent its own size or
+unit-price convention. Pydantic models reject non-positive prices and a "regular"
+price below the sale price (a feed error, not a deal).
+
+**Eight adapters, five genuinely different payload shapes.** Walmart (nested JSON,
+float dollars), Costco (warehouse-scoped, `"$14.99"` strings), BJ's (integer cents,
+instant savings), Publix (weekly ad, multi-buy text), Winn-Dixie + Fresco y Más
+(one shared parser for the Southeastern Grocers platform, two banners), Presidente
+(HTML circular parsed with stdlib `html.parser` — no scraping dependency), and Rey
+Chavez (a distributor that publishes no consumer prices).
+
+**Provenance is graded per source, honestly.** Costco is `delivery_price` because
+costco.com pricing routinely differs from the warehouse shelf. Presidente is
+`estimated` because a circular is an advertisement, not a shelf reading. A test
+asserts **no fixture-backed connector may ever claim `verified_in_store`.**
+
+**Messy fixtures, as requested.** Missing UPCs, empty-string UPCs, a UPC with a bad
+check digit, punctuated UPCs, null prices, zero prices, prose prices ("Call for
+price", "not available", "Precio especial"), promotions with no end date, HTML
+entities, shouting case with doubled whitespace, sizes present only in the title,
+items with no parseable size, and records with none of the expected fields. Each
+is covered by a test asserting the damage is contained and recorded in `notes[]`
+rather than silently dropped or guessed at.
+
+**Partial failure isolation** (`app/services/search.py`). Each connector runs in
+its own thread with its own timeout. Tested failure modes — upstream raises, 403
+bot-protection, parse error, store-locator error, no store for the ZIP, hanging
+connector, and a wholly broken subclass whose `search()` itself raises — each
+degrade only their own retailer. The headline test sabotages the real
+`WalmartConnector` with a 403 and asserts the other **seven still return results**
+while Walmart is reported `degraded` with its reason. `SearchOutcome.is_complete`
+is False whenever any retailer failed, so the UI can never present a partial
+search as a complete one.
+
+**Three real bugs caught in this phase:**
+
+1. **The timeout didn't actually bound latency.** `ThreadPoolExecutor` used as a
+   context manager calls `shutdown(wait=True)` on exit, so a hanging connector was
+   correctly *reported* as degraded while still being *waited on* — the search
+   took the full 2s. Now shut down with `wait=False, cancel_futures=True`; the
+   test suite went from 2.18s to 0.42s. Connectors are side-effect-free reads, so
+   an abandoned one is harmless.
+2. **Hyphenated sizes were missed.** `"12-oz box"` and `"16.3-oz jar"` are
+   ubiquitous in ad copy and parsed as no size at all. Worse, `"12-pk 12-oz cans"`
+   parsed as **`12 ct`** — not missing data but *wrong* data, claiming 12 items
+   when it is 12 × 12 oz. Fixed by allowing an optional hyphen between number and
+   unit.
+3. **Spanish units were unsupported.** `"2 LT"`, `"2 Litros"`, `"1 galón"`,
+   `"2 libras"`, `"6 unidades"`, `"docena"`, `"medio galón"` all failed. For
+   Fresco y Más and Presidente in ZIP 33009 this is core vocabulary, not an edge
+   case. Added Spanish aliases plus accent folding.
+
+After the parser fixes, all seven priced retailers produce a comparable `$/lb` for
+"cheerios", correctly ranked from BJ's $3.53/lb to Presidente $7.99/lb, with Rey
+Chavez listed as stocking it at no published price.
+
+**Tests: 245 passing** (up from 175).
+
 
 ## Phase 5 — Core APIs ⬜ NOT STARTED
 `GET /search`, `GET /product/{id}`, `POST /compare-basket`.

@@ -1,0 +1,85 @@
+{
+  "_meta": {
+    "captured_at": "2026-08-18T00:30:00Z",
+    "source": "fixture"
+  },
+  "searchResult": {
+    "items": [
+      {
+        "usItemId": "10450114",
+        "name": "Great Value Whole Milk, 1 Gallon",
+        "brand": "Great Value",
+        "upc": "078742370699",
+        "priceInfo": {
+          "currentPrice": {
+            "price": 3.42
+          }
+        },
+        "category": "dairy"
+      },
+      {
+        "usItemId": "10291024",
+        "name": "  CHEERIOS   ORIGINAL  CEREAL,  12 OZ  BOX ",
+        "brand": "General Mills",
+        "upc": "016000275270",
+        "priceInfo": {
+          "currentPrice": {
+            "price": 4.48
+          }
+        },
+        "category": "cereal"
+      },
+      {
+        "usItemId": "15200011",
+        "name": "Coca-Cola® Classic Soda Pop, 24 Pack, 12 fl oz Cans",
+        "brand": "Coca-Cola",
+        "upc": "",
+        "priceInfo": {
+          "currentPrice": {
+            "price": 13.98
+          }
+        },
+        "category": "beverage"
+      },
+      {
+        "usItemId": "44700938",
+        "name": "Skippy Creamy Peanut Butter, 16.3 oz",
+        "brand": "Skippy",
+        "upc": "037600106917",
+        "priceInfo": {
+          "currentPrice": {
+            "price": null
+          }
+        },
+        "category": "pantry"
+      },
+      {
+        "usItemId": "99999001",
+        "name": "Marketside Fresh Guacamole",
+        "brand": "Marketside",
+        "upc": null,
+        "priceInfo": {
+          "currentPrice": {
+            "price": 4.97
+          }
+        },
+        "category": "deli"
+      },
+      {
+        "usItemId": "10450115",
+        "name": "Great Value Organic Whole Milk, 1/2 gal",
+        "brand": "Great Value",
+        "upc": "078742370705",
+        "priceInfo": {
+          "currentPrice": {
+            "price": 4.24
+          }
+        },
+        "category": "dairy"
+      },
+      {
+        "malformed": true
+      }
+    ]
+  }
+}

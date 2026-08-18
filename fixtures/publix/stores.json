@@ -1,0 +1,12 @@
+{
+  "stores": [
+    {
+      "storeNumber": "0479",
+      "name": "Publix Super Market",
+      "city": "Hallandale Beach",
+      "state": "FL",
+      "zipCode": "33009",
+      "addressVerified": false
+    }
+  ]
+}

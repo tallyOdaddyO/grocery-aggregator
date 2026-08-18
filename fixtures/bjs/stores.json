@@ -1,0 +1,12 @@
+{
+  "clubs": [
+    {
+      "clubId": "0084",
+      "clubName": "BJ's Wholesale Club",
+      "city": "Hallandale Beach",
+      "state": "FL",
+      "zip": "33009",
+      "addressVerified": false
+    }
+  ]
+}

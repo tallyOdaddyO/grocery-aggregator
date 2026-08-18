@@ -1,0 +1,43 @@
+{
+  "_meta": {
+    "captured_at": "2026-08-18T00:30:00Z",
+    "source": "fixture"
+  },
+  "circular": {
+    "store": "0512",
+    "products": [
+      {
+        "sku": "FM-51001",
+        "name": "Leche Entera / Whole Milk 1 GAL",
+        "brandName": "SE Grocers",
+        "barcode": "021130126026",
+        "currentPrice": "3.69",
+        "dept": "dairy"
+      },
+      {
+        "sku": "FM-51002",
+        "name": "Cereal Cheerios 12 OZ",
+        "brandName": "General Mills",
+        "barcode": "016000275270",
+        "currentPrice": "5.29",
+        "dept": "cereal"
+      },
+      {
+        "sku": "FM-51003",
+        "name": "Refresco Coca-Cola 2 LT",
+        "brandName": "Coca-Cola",
+        "barcode": "049000028911",
+        "currentPrice": "2.49",
+        "dept": "beverage"
+      },
+      {
+        "sku": "FM-51004",
+        "name": "Malanga  ",
+        "brandName": null,
+        "barcode": "",
+        "currentPrice": "1.99",
+        "dept": "produce"
+      }
+    ]
+  }
+}

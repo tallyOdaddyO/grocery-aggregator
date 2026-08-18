@@ -1,0 +1,49 @@
+{
+  "_meta": {
+    "captured_at": "2026-08-18T00:30:00Z",
+    "source": "fixture"
+  },
+  "circular": {
+    "store": "0331",
+    "products": [
+      {
+        "sku": "WD-77001",
+        "name": "SE Grocers Whole Milk 1 GAL",
+        "brandName": "SE Grocers",
+        "barcode": "021130126026",
+        "currentPrice": "3.79",
+        "wasPrice": "4.29",
+        "dealType": "SALE",
+        "dealEnds": "2026-08-24",
+        "dept": "dairy"
+      },
+      {
+        "sku": "WD-77002",
+        "name": "Cheerios Toasted Whole Grain Oat Cereal 12 OZ",
+        "brandName": "General Mills",
+        "barcode": "016000275270",
+        "currentPrice": "4.99",
+        "wasPrice": null,
+        "dept": "cereal"
+      },
+      {
+        "sku": "WD-77003",
+        "name": "Coca Cola 12 PK 12 FL OZ CANS",
+        "brandName": "Coca-Cola",
+        "barcode": "049000050103",
+        "currentPrice": "9.49",
+        "dealType": "SALE",
+        "dealEnds": null,
+        "dept": "beverage"
+      },
+      {
+        "sku": "WD-77004",
+        "name": "Deli Rotisserie Chicken",
+        "brandName": null,
+        "barcode": null,
+        "currentPrice": "not available",
+        "dept": "deli"
+      }
+    ]
+  }
+}

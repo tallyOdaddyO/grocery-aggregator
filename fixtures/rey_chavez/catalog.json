@@ -1,0 +1,25 @@
+{
+  "_meta": {
+    "captured_at": "2026-08-18T00:30:00Z",
+    "source": "fixture",
+    "pricing_note": "wholesale; pricing by quote only, no consumer prices"
+  },
+  "items": [
+    {
+      "itemCode": "RC-1001",
+      "description": "Whole Milk 1 gal (case of 4)",
+      "brand": null,
+      "upc": null,
+      "price": null,
+      "pricing": "quote_only"
+    },
+    {
+      "itemCode": "RC-1002",
+      "description": "Cheerios 12 oz (case of 12)",
+      "brand": "General Mills",
+      "upc": null,
+      "price": null,
+      "pricing": "quote_only"
+    }
+  ]
+}

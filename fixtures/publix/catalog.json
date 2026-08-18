@@ -1,0 +1,55 @@
+{
+  "_meta": {
+    "captured_at": "2026-08-18T00:30:00Z",
+    "source": "fixture",
+    "ad_note": "weekly ad; store-scoped"
+  },
+  "ad": {
+    "items": [
+      {
+        "id": "P-1001",
+        "title": "Publix Whole Milk, gallon",
+        "brand": "Publix",
+        "upc": "041415000018",
+        "priceText": "$3.99",
+        "category": "dairy"
+      },
+      {
+        "id": "P-1002",
+        "title": "Cheerios Cereal, 12-oz box",
+        "brand": "General Mills",
+        "upc": "016000275270",
+        "priceText": "2 for $7.00",
+        "promotion": "Buy 2",
+        "promotionEnds": null,
+        "category": "cereal"
+      },
+      {
+        "id": "P-1003",
+        "title": "Skippy Peanut Butter, 16.3-oz jar",
+        "brand": "Skippy",
+        "upc": "0376-0010-6917",
+        "priceText": "$4.29",
+        "promotion": "BOGO",
+        "promotionEnds": null,
+        "category": "pantry"
+      },
+      {
+        "id": "P-1004",
+        "title": "Coca&#45;Cola Classic, 12-pk 12-oz cans",
+        "brand": "Coca-Cola",
+        "upc": "049000050103",
+        "priceText": "$8.49",
+        "category": "beverage"
+      },
+      {
+        "id": "P-1005",
+        "title": "GreenWise Organic Whole Milk, half gallon",
+        "brand": "GreenWise",
+        "upc": "041415999999",
+        "priceText": "$5.49",
+        "category": "dairy"
+      }
+    ]
+  }
+}

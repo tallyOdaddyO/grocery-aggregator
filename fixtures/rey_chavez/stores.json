@@ -1,0 +1,15 @@
+{
+  "locations": [
+    {
+      "code": "RC-MIA",
+      "name": "Rey Chavez Distributors",
+      "city": "Miami",
+      "state": "FL",
+      "zip": "33142",
+      "serves_zips": [
+        "33009"
+      ],
+      "addressVerified": false
+    }
+  ]
+}

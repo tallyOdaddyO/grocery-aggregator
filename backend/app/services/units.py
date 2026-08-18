@@ -97,6 +97,19 @@ _ALIASES: dict[str, str] = {
     "each": "ct", "ea": "ct", "piece": "ct", "pieces": "ct", "pc": "ct",
     "pcs": "ct", "unit": "ct", "units": "ct",
     "dozens": "dozen", "doz": "dozen",
+    # --- Spanish. Fresco y Mas and Presidente list in Spanish as a matter of
+    # --- course in this market, so these are core vocabulary, not an edge case.
+    "gramo": "g", "gramos": "g",
+    "kilogramo": "kg", "kilogramos": "kg",
+    "libra": "lb", "libras": "lb",
+    "onza": "oz", "onzas": "oz",
+    "onza liquida": "fl_oz", "onzas liquidas": "fl_oz",
+    "mililitro": "ml", "mililitros": "ml",
+    "litro": "l", "litros": "l", "lt": "l",
+    "galon": "gal", "galones": "gal",
+    "cuarto": "qt", "cuartos": "qt",
+    "unidad": "ct", "unidades": "ct", "pieza": "ct", "piezas": "ct",
+    "docena": "dozen", "docenas": "dozen",
 }
 
 #: Longest-first so "fluid ounce" wins over "ounce" during tokenizing.

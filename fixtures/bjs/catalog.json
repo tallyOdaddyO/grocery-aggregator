@@ -1,0 +1,56 @@
+{
+  "_meta": {
+    "captured_at": "2026-08-18T00:30:00Z",
+    "source": "fixture"
+  },
+  "results": [
+    {
+      "articleId": "300012",
+      "description": "Wellsley Farms Whole Milk, 2 x 1 gal",
+      "brand": "Wellsley Farms",
+      "gtin": "888670000014",
+      "price": {
+        "amount": 799,
+        "currency": "USD"
+      },
+      "category": "dairy"
+    },
+    {
+      "articleId": "300045",
+      "description": "Cheerios Original, 2 pk, 20.35 oz",
+      "brand": "General Mills",
+      "gtin": "016000275270",
+      "price": {
+        "amount": 899,
+        "currency": "USD"
+      },
+      "instantSavings": {
+        "amount": 200,
+        "endsOn": null
+      },
+      "category": "cereal"
+    },
+    {
+      "articleId": "300099",
+      "description": "Coca-Cola Classic 12 fl oz / 35 ct",
+      "brand": "Coca-Cola",
+      "gtin": "049000050103",
+      "price": {
+        "amount": 1699,
+        "currency": "USD"
+      },
+      "category": "beverage"
+    },
+    {
+      "articleId": "300100",
+      "description": "Seasonal Item",
+      "brand": null,
+      "gtin": "049000050103",
+      "price": {
+        "amount": 0,
+        "currency": "USD"
+      },
+      "category": null
+    }
+  ]
+}

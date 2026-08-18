@@ -169,3 +169,56 @@ class TestAmbiguityAndFailure:
 
     def test_noise_words_are_ignored(self):
         assert _totals("Family Size 18 oz box") == (1, 510.2914, "g")
+
+
+class TestHyphenatedSizes:
+    """Ad copy writes "12-oz box" constantly. Missing it is bad; misreading a
+    neighbouring "12-pk" as the contents is worse."""
+
+    @pytest.mark.parametrize(
+        "text,pack,value,uom",
+        [
+            ("Cheerios Cereal, 12-oz box", 1, 340.1943, "g"),
+            ("Skippy Peanut Butter, 16.3-oz jar", 1, 462.0972, "g"),
+            ("Publix Whole Milk, 1-gal jug", 1, 3785.4118, "ml"),
+        ],
+    )
+    def test_hyphen_between_number_and_unit(self, text, pack, value, uom):
+        assert _totals(text) == (pack, pytest.approx(value, abs=1e-3), uom)
+
+    def test_pack_and_hyphenated_size_together(self):
+        """'12-pk 12-oz cans' is twelve 12 oz units, not twelve items."""
+        p = parse_package_size("Coca-Cola Classic, 12-pk 12-oz cans")
+        assert p.pack_count == 12
+        assert p.unit_quantity.value == 12
+        assert p.total_base.kind is not UomKind.COUNT
+
+    def test_beverage_hint_applies_to_hyphenated_sizes(self):
+        p = parse_package_size("Coca-Cola, 12-pk 12-oz cans", category="beverage")
+        assert p.total_base.uom == "ml"
+        assert p.total_base.value == pytest.approx(12 * 12 * 29.5735295625)
+
+
+class TestSpanishUnits:
+    """Fresco y Mas and Presidente list in Spanish as a matter of course."""
+
+    @pytest.mark.parametrize(
+        "text,value,uom",
+        [
+            ("Refresco Coca-Cola 2 LT", 2000.0, "ml"),
+            ("Coca-Cola 2 Litros", 2000.0, "ml"),
+            ("Leche Entera 1 galon", 3785.4118, "ml"),
+            ("Leche Entera 1 galón", 3785.4118, "ml"),
+            ("Arroz 2 libras", 907.1847, "g"),
+            ("Queso 500 gramos", 500.0, "g"),
+            ("medio galon", 1892.7059, "ml"),
+        ],
+    )
+    def test_spanish_units_parse(self, text, value, uom):
+        _, v, u = _totals(text)
+        assert (v, u) == (pytest.approx(value, abs=1e-3), uom)
+
+    def test_spanish_counts(self):
+        assert parse_package_size("6 unidades").pack_count == 6
+        assert parse_package_size("paquete de 8").pack_count == 8
+        assert parse_package_size("docena").pack_count == 12

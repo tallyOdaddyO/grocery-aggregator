@@ -1,0 +1,12 @@
+{
+  "warehouses": [
+    {
+      "warehouseNumber": "1021",
+      "name": "Costco Wholesale Hallandale Beach",
+      "city": "Hallandale Beach",
+      "state": "FL",
+      "zipCode": "33009",
+      "addressVerified": false
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "stores": [
+    {
+      "id": "1234",
+      "displayName": "Walmart Supercenter",
+      "address": {
+        "line1": null,
+        "city": "Hallandale Beach",
+        "state": "FL",
+        "postalCode": "33009"
+      },
+      "addressVerified": false
+    },
+    {
+      "id": "5678",
+      "displayName": "Walmart Neighborhood Market",
+      "address": {
+        "line1": null,
+        "city": "Miami",
+        "state": "FL",
+        "postalCode": "33169"
+      },
+      "addressVerified": false
+    }
+  ]
+}

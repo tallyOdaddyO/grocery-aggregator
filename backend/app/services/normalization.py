@@ -31,10 +31,17 @@ _UNIT_ALT = "|".join(re.escape(t) for t in UNIT_TOKENS)
 
 #: A number followed by a unit. The trailing guard stops "g" from matching inside
 #: a word, which would turn "grape" into grams.
-_QTY_RE = re.compile(rf"({_NUM})\s*({_UNIT_ALT})(?![a-z])", re.IGNORECASE)
+#: The optional hyphen matters: ad copy writes "12-oz box" and "16.3-oz jar"
+#: constantly, and without it the size is missed entirely - or worse, a nearby
+#: "12-pk" is mistaken for the package contents.
+_QTY_RE = re.compile(rf"({_NUM})\s*-?\s*({_UNIT_ALT})(?![a-z])", re.IGNORECASE)
 
-_PACK_OF_RE = re.compile(rf"\bpack\s+of\s+({_NUM})\b", re.IGNORECASE)
-_N_PACK_RE = re.compile(r"\b(\d+)\s*-?\s*(?:packs?|pks?)\b", re.IGNORECASE)
+_PACK_OF_RE = re.compile(
+    rf"\b(?:pack\s+of|paquete\s+de)\s+({_NUM})\b", re.IGNORECASE
+)
+_N_PACK_RE = re.compile(
+    r"\b(\d+)\s*-?\s*(?:packs?|pks?|paquetes?)\b", re.IGNORECASE
+)
 #: Leading multiplier: "24 x 12 oz", "24x12oz". Requires a digit after the x so
 #: that words containing "x" are never mistaken for a multiplier.
 _MULT_RE = re.compile(r"(?<![a-z0-9])(\d+)\s*[x×*]\s*(?=\d)", re.IGNORECASE)
@@ -42,9 +49,11 @@ _MULT_RE = re.compile(r"(?<![a-z0-9])(\d+)\s*[x×*]\s*(?=\d)", re.IGNORECASE)
 _SLASH_RE = re.compile(r"(?<![\d/])(\d+)\s*/\s*(\d+(?:\.\d+)?)\s*(?=[a-z])",
                        re.IGNORECASE)
 _COUNT_RE = re.compile(
-    r"\b(\d+)\s*-?\s*(?:ct|cts|ct\.|count|counts|pieces?|pcs?)\b", re.IGNORECASE
+    r"\b(\d+)\s*-?\s*(?:ct|cts|ct\.|count|counts|pieces?|pcs?"
+    r"|unidades?|piezas?)\b",
+    re.IGNORECASE,
 )
-_DOZEN_RE = re.compile(r"\bdozen\b", re.IGNORECASE)
+_DOZEN_RE = re.compile(r"\b(?:dozen|docenas?)\b", re.IGNORECASE)
 
 #: Categories where a bare "oz" means fluid ounces, not weight.
 _VOLUME_CATEGORIES = {
@@ -121,6 +130,12 @@ def _prepare(text: str) -> str:
     ):
         text = text.replace(glyph, ascii_form)
     text = re.sub(r"\bhalf\b", "1/2", text)
+    text = re.sub(r"\bmedio\b|\bmedia\b", "1/2", text)
+    # Fold accents so "galon" and "galon" (accented) resolve to one unit.
+    text = "".join(
+        c for c in unicodedata.normalize("NFD", text)
+        if unicodedata.category(c) != "Mn"
+    )
     return " ".join(text.split())
 
 
