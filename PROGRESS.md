@@ -3,8 +3,8 @@
 Append-only status file. Updated at the end of every phase so context is never lost.
 
 **Target ZIP:** 33009 (Hallandale Beach, FL)
-**Current phase:** 3 — Normalization & Matching Engines
-**Last updated:** 2026-08-18 (Phase 2 complete)
+**Current phase:** 4 — Retailer Connectors (fixture-driven)
+**Last updated:** 2026-08-18 (Phase 3 complete)
 
 ---
 
@@ -78,10 +78,79 @@ integer-cent exactness, unique `(variant, store)` price, FK enforcement under
 `PRAGMA foreign_keys=ON`, append-only history surviving a price update, and seed
 idempotency + no-fabrication assertions.
 
-## Phase 3 — Normalization & Matching Engines ⬜ NEXT
-Unit conversion, package-size parser, 3-stage matcher, extensive pytest coverage.
+## Phase 3 — Normalization & Matching Engines ✅ COMPLETE
 
-## Phase 4 — Retailer Connectors (fixture-driven) ⬜ NOT STARTED
+Built test-first: every parsing and matching test below was written and observed
+failing before the implementation existed.
+
+**`app/services/units.py`** — unit registry with exact definitions (1 oz =
+28.349523125 g, 1 US fl oz = 29.5735295625 ml), base projection to g / ml / ct.
+Cross-dimension conversion **raises** rather than guessing: mass→volume needs a
+density, count→mass needs a per-item weight, and a fabricated unit price is the
+worst failure mode this tool has. `fl oz` and `oz` are distinct units, which is the
+single most dangerous confusion in a grocery dataset.
+
+**`app/services/normalization.py`** — package-size parser. Handles multi-packs
+(`24 x 12 oz`, `24x12oz`, `12/12 oz`, `12-pack, 12 fl oz cans`, `16.9 fl oz, 24
+pack`), composites (`1 lb 4 oz` → one 20 oz unit, not a 4 oz package), multipacks
+*of* composites (`2 x 1 lb 4 oz`), fractions (`1/2 gal`, `1 1/2 lb`, `half gallon`),
+and count-only packages (`2-pack`, `40 ct`, `dozen`).
+
+- `12/12 oz` vs `1/2 gal`: disambiguated by the rule that a multipack never has a
+  numerator smaller than its denominator.
+- `pack_count` and `unit_quantity` are kept separate from `total_base`, so the
+  sticker size and the comparison basis both survive parsing.
+- A bare `oz` is read as mass and tagged `ambiguous_oz`; a `category` hint of
+  beverage reinterprets it as fluid ounces.
+- Unparseable text yields `parse_confidence == 0.0` and **no** size — never a
+  default of "1 each", which would make a 24-pack look like a single can.
+
+Also: GTIN-14 normalization with mod-10 check-digit validation (a corrupt barcode
+returns `None` so it can never act as an identity claim), brand folding, name
+normalization that strips size descriptors (size is compared arithmetically, so it
+must not also be compared as text), and attribute extraction.
+
+**`app/services/matching.py`** — the three-stage engine.
+
+- **Stage 2 vetoes are evaluated before Stage 1**, so a veto outranks even an equal
+  UPC. When a feed reports one UPC for two non-equivalent packages, the physical
+  measurement wins and the contradiction is recorded as an `upc_size_conflict`
+  signal for investigation.
+- Vetoes: package size beyond tolerance, dimension mismatch, brand mismatch, and
+  variant flags (organic, decaf, low-fat, sugar-free, …).
+- Stage 3 blends brand (0.25) + size equivalence (0.25) + token-set name similarity
+  (0.50), with order-insensitive matching and Levenshtein pairing for inflection
+  ("banana" ≈ "bananas") — no stemmer, so no stemmer false positives.
+- Thresholds are per category: produce is loose (0.75 / 10% size tolerance),
+  baby formula and pharmacy are strict (0.95 / 1%).
+
+**Explainability is structured data, not prose.** `MatchResult.as_dict()` returns
+`{confidence, stage, signals[], vetoed, veto_reason, is_match, threshold, summary}`
+where each signal is `{name, detail, weight}`. It serializes straight to JSON, is
+stored verbatim in `product_matches.signals` (the GIN-indexed JSONB column), and is
+returned unchanged by the API. The human summary is derived from the same data, not
+written separately:
+
+```
+Confidence 100%: UPC exact match (00016000275270), size equivalent (12 oz ≈ 12 oz)
+Not equivalent: package size differs (12 oz vs 24 oz)
+```
+
+**`app/services/pricing.py`** — unit price in $/lb, $/fl oz, $/count, alongside an
+exact cents-per-base-unit used for ranking (the display string is never used for
+comparison). Sticker and unit price stay separate: a test asserts Costco's $19.99 /
+40 ct beats Publix's $6.49 / 12 ct per unit *while costing 3× more at the register*.
+An unknown package size yields no unit price rather than a fabricated one.
+
+**Tests: 175 passing** (up from 27). Two real bugs were caught by tests during this
+phase: `normalize_name` stranded a bare `x` token from `24 x 12 oz` (multiplier had
+to be stripped before the quantity), and the `low_fat` pattern never matched "2%
+Milk" because `\b` cannot follow a `%`. Eleven parsing expectations I had computed by
+hand were also wrong in the 4th decimal; they were re-derived from primary unit
+definitions and cross-checked against the 16 oz = 1 lb and 128 fl oz = 1 gal
+identities, independently of the parser, so the tests can genuinely falsify it.
+
+## Phase 4 — Retailer Connectors (fixture-driven) ⬜ NEXT
 `BaseRetailerConnector` + 8 adapters, realistic fixtures, partial-failure isolation.
 
 ## Phase 5 — Core APIs ⬜ NOT STARTED
