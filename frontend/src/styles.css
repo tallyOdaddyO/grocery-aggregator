@@ -1,1 +1,130 @@
-:root { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+:root {
+  --bg: #ffffff;
+  --fg: #16181d;
+  --muted: #5c6370;
+  --line: #e3e6ea;
+  --card: #f8f9fb;
+  --strong: #0f7b3f;
+  --good: #1f6feb;
+  --caution: #b06000;
+  --bad: #b3261e;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--fg);
+  background: var(--bg);
+  line-height: 1.5;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+a { color: var(--good); }
+
+.app-header {
+  display: flex; align-items: center; gap: 1.5rem;
+  padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--line);
+}
+.app-header h1 { font-size: 1.15rem; margin: 0; }
+.app-header h1 a { color: var(--fg); text-decoration: none; }
+.app-header nav { display: flex; gap: 1rem; }
+.app-zip { margin-left: auto; color: var(--muted); font-size: 0.85rem; }
+main { padding: 1.25rem; max-width: 1100px; margin: 0 auto; }
+
+h2 { font-size: 1.3rem; }
+h3 { font-size: 1rem; margin-bottom: 0.35rem; }
+
+.badge {
+  display: inline-block; padding: 0.05rem 0.45rem; border-radius: 999px;
+  font-size: 0.72rem; border: 1px solid var(--line); background: var(--card);
+  color: var(--muted); white-space: nowrap;
+}
+.tone-strong { color: var(--strong); border-color: currentColor; }
+.tone-good   { color: var(--good);   border-color: currentColor; }
+.tone-caution{ color: var(--caution);border-color: currentColor; }
+.tone-muted  { color: var(--muted); }
+.tone-ok { color: var(--strong); }
+.tone-degraded { color: var(--caution); }
+.tone-unavailable { color: var(--bad); }
+
+.warning {
+  border-left: 3px solid var(--caution); background: #fff8ec;
+  padding: 0.6rem 0.85rem; border-radius: 4px; margin: 0.75rem 0;
+}
+.error { color: var(--bad); }
+.empty { color: var(--muted); font-style: italic; }
+
+/* Sticker price is the number you pay; unit price is the comparison aid.
+   They are deliberately different weights so they can never be confused. */
+.price-tag { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem; }
+.price-sticker { font-size: 1.1rem; font-weight: 650; }
+.price-unit { color: var(--muted); font-size: 0.85rem; }
+.price-none { font-style: italic; color: var(--muted); }
+.freshness { font-size: 0.78rem; color: var(--muted); }
+.freshness[data-fresh="false"] { color: var(--caution); }
+
+.retailer-grid, .groups, .group-items, .trips, .trip-items,
+.basket-lines, .signals, .checks {
+  list-style: none; padding: 0; margin: 0;
+}
+.retailer-grid {
+  display: grid; gap: 0.75rem;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+.retailer-card, .group-card, .plan, .trip {
+  border: 1px solid var(--line); border-radius: 8px;
+  padding: 0.75rem 0.9rem; background: var(--card);
+}
+.retailer-card h3 { margin: 0 0 0.3rem; }
+.retailer-reason { font-size: 0.8rem; color: var(--muted); margin: 0.35rem 0 0; }
+
+.groups { display: grid; gap: 1rem; }
+.group-card header { border-bottom: 1px solid var(--line); padding-bottom: 0.4rem; }
+.group-card h3 { margin: 0; }
+.group-match { margin: 0.15rem 0 0; font-size: 0.8rem; color: var(--muted); }
+.group-item {
+  display: grid; gap: 0.15rem 0.75rem; padding: 0.55rem 0;
+  border-bottom: 1px solid var(--line);
+  grid-template-columns: minmax(0, 2fr) 1fr 1fr;
+}
+.group-item:last-child { border-bottom: none; }
+.group-item .price-tag { grid-column: 1 / -1; }
+.item-retailer, .item-size { color: var(--muted); font-size: 0.85rem; }
+
+.plans { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+.plan-total { display: flex; align-items: baseline; gap: 0.6rem; margin: 0.2rem 0 0.6rem; }
+.plan-amount { font-size: 1.5rem; font-weight: 700; }
+/* Stops are shown as prominently as money: a dollar saved across three stores
+   is not obviously a better outcome. */
+.plan-stops { color: var(--caution); font-weight: 600; }
+.trips { display: grid; gap: 0.6rem; }
+.trip-store { margin: 0 0 0.35rem; }
+.trip-number { color: var(--muted); font-weight: 400; font-size: 0.8rem; }
+.trip-item { padding: 0.35rem 0; border-bottom: 1px dashed var(--line); }
+.trip-item:last-child { border-bottom: none; }
+.item-notes { list-style: none; padding: 0; margin: 0.25rem 0 0; }
+.item-note { font-size: 0.78rem; color: var(--caution); }
+.trip-subtotal { margin: 0.4rem 0 0; font-weight: 600; }
+.savings { font-weight: 600; color: var(--strong); }
+.unavailable { margin-top: 1rem; }
+
+.checks { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.4rem 0; }
+.check { font-size: 0.75rem; padding: 0.05rem 0.45rem; border-radius: 999px; border: 1px solid; }
+.check-pass { color: var(--strong); }
+.check-fail { color: var(--bad); }
+.checks-unverified, .signals { font-size: 0.8rem; color: var(--muted); }
+.confidence { font-weight: 700; font-size: 1.05rem; }
+.tone-veto { color: var(--bad); font-weight: 600; }
+
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+th, td { text-align: left; padding: 0.35rem 0.6rem; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 600; font-size: 0.8rem; }
+
+form { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: end; margin-bottom: 1rem; }
+label { font-size: 0.8rem; color: var(--muted); display: block; }
+input { padding: 0.4rem 0.55rem; border: 1px solid var(--line); border-radius: 6px; font: inherit; }
+button {
+  padding: 0.45rem 0.9rem; border-radius: 6px; border: 1px solid var(--good);
+  background: var(--good); color: white; font: inherit; cursor: pointer;
+}
+button[type="button"] { background: transparent; color: var(--good); }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+.basket-line { display: flex; gap: 0.6rem; align-items: end; margin-bottom: 0.4rem; }
+.dashboard-links { display: flex; gap: 1rem; margin-bottom: 1rem; }

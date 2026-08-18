@@ -6,6 +6,7 @@ import logging
 from fastapi import FastAPI
 
 from app.api.v1.basket import router as basket_router
+from app.api.v1.health import router as health_router
 from app.api.v1.product import router as product_router
 from app.api.v1.search import router as search_router
 from app.core.config import get_settings
@@ -25,9 +26,5 @@ app = FastAPI(
 app.include_router(search_router)
 app.include_router(product_router)
 app.include_router(basket_router)
+app.include_router(health_router)
 
-
-@app.get("/api/v1/health", tags=["meta"])
-def health() -> dict:
-    return {"status": "ok", "target_zip": settings.target_zip,
-            "source": settings.retailscout_source}

@@ -129,3 +129,38 @@ export interface CompareBasketResponse {
   savings_cents: number | null;
   unavailable_items: UnavailableItem[];
 }
+
+export interface StoreSummary {
+  retailer: RetailerID;
+  store_number: string;
+  name: string | null;
+  city: string | null;
+  state: string | null;
+  zip: string;
+  address_verified: boolean;
+}
+
+export interface PriceObservationOut {
+  observed_at: string;
+  sticker_price_cents: number;
+  unit_price_cents: number | null;
+  unit_measure: string;
+  promotion_type: string;
+  provenance: PriceProvenance;
+}
+
+export interface ProductDetailResponse {
+  id: string;
+  retailer: RetailerID;
+  title: string;
+  brand: string | null;
+  category: string | null;
+  upc: string | null;
+  size_raw: string;
+  pack_count: number;
+  store: StoreSummary;
+  current_price: PriceData;
+  price_history: PriceObservationOut[];
+  confidence_stats: ConfidenceStats;
+  equivalent_products: SearchProductSummary[];
+}

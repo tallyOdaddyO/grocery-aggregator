@@ -4,7 +4,7 @@ Append-only status file. Updated at the end of every phase so context is never l
 
 **Target ZIP:** 33009 (Hallandale Beach, FL)
 **Current phase:** 6 — Frontend & UI
-**Last updated:** 2026-08-18 (Phase 6 in progress: toolchain + core components)
+**Last updated:** 2026-08-18 (Phase 6 complete)
 
 ---
 
@@ -359,7 +359,7 @@ cannot describe the same price with different trust language.
 
 **Tests: 321 passing** (up from 245), including 75 FastAPI `TestClient` tests.
 
-## Phase 6 — Frontend & UI 🟡 IN PROGRESS
+## Phase 6 — Frontend & UI ✅ COMPLETE
 
 ### Environment setup ✅ COMPLETE
 
@@ -420,10 +420,50 @@ than the user's browser.
 
 **Frontend tests: 50 passing.** Typecheck and production build both clean.
 
-### Remaining in Phase 6 ⬜
-Dashboard, Search page, Product Detail page, and Basket page wiring these
-components to the API (the components are unit- and contract-tested but not yet
-imported by `App`, so they are currently tree-shaken out of the bundle).
+### The four pages ✅ COMPLETE
+
+Routed with `react-router-dom` v7; `lib/api.ts` is a typed client where **every**
+failure becomes an `ApiError` carrying an HTTP status, so callers can tell "this
+product does not exist" (404) from "the backend is down" (network/5xx) and say
+something truthful for each.
+
+- **Dashboard** — per-retailer reachability for the ZIP. States up front that the
+  data source is `fixture`, so nobody mistakes it for live retailer pricing.
+- **Search** — one card per equivalence group, each labelled with *how* it matched
+  (barcode / attributes / name and size / only one retailer). Items sort by unit
+  price where known while the sticker price stays visible, so a good unit price on
+  a huge package cannot masquerade as a cheap item.
+- **Product detail** — sticker vs unit price, freshness, the full observed price
+  history newest-first, the veto checks that passed, and equivalents elsewhere.
+  An unverified store address is labelled as such.
+- **Basket** — the split-vs-complete comparison, with unavailable items and
+  connector warnings.
+
+`ConnectorHealthBanner` renders above results on both Search and Basket whenever
+`is_complete` is false, naming each retailer and its reason — a partial result set
+that looks complete is the failure mode this system exists to avoid.
+
+### Backend addition
+`GET /api/v1/health` now returns per-connector reachability, which
+`ARCHITECTURE.md` always specified but was never implemented. It resolves stores
+only and **never fetches prices**, with a test asserting `fetch_raw` is not called
+— the dashboard must stay cheap and must not masquerade as a price refresh.
+`scripts/refresh.py` was added to run searches and persist observations (the manual
+form of the Phase 7 worker).
+
+### Verification
+- **Backend: 331 tests passing.** **Frontend: 84 tests passing.** Typecheck clean,
+  `vite build` clean (252 kB / 80 kB gzipped).
+- **Live end-to-end run** with `uvicorn` + `vite` and a migrated, seeded, ingested
+  database: health reports all 8 connectors reachable; `/search?q=cheerios` returns
+  3 correctly-separated groups through the frontend proxy; `/product/publix:P-1002`
+  returns sticker 350 / unit 467 per lb, `verified_online`, 4 equivalents and veto
+  checks `[unit_dimension, package_size, brand]`; a basket of milk + 2 cheerios +
+  guacamole correctly reports **no one-stop option** and a 3-stop split at $15.66.
+
+Two issues found during verification: `uvicorn` was listed in `requirements.txt`
+but had never actually been installed, and a shell `&&`-chained `echo` was masking
+a real `tsc` failure (an unused declaration). Both fixed.
 
 ## Phase 7 — Live Integration & Workers ⬜ NOT STARTED
 ARQ jobs, backoff, rate limits, circuit breaker. **Blocked on Redis install.**
