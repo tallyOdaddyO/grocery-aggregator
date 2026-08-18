@@ -182,3 +182,31 @@ def add(left: Quantity, right: Quantity) -> Quantity:
     return Quantity(
         left.value + convert(right.value, right.uom, left.uom), left.uom, left.kind
     )
+
+
+#: Default relative tolerance when deciding whether two package sizes are the
+#: same. Labelled weights are rounded ("5.3 oz" is really 150.25 g), so exact
+#: equality would split products that are genuinely identical.
+SIZE_TOLERANCE = 0.02
+
+
+def sizes_equivalent(
+    left: float | None, right: float | None, tolerance: float = SIZE_TOLERANCE
+) -> bool:
+    """Whether two base-unit quantities describe the same package size.
+
+    This is the single definition of size identity for the whole system. The same
+    real-world defect - retailers reusing one UPC across pack sizes - has surfaced
+    in matching, in search grouping, and in ingestion; each layer must answer this
+    question the same way or the database will merge products the matcher keeps
+    apart.
+
+    Both unknown counts as equivalent; one known and one unknown does not, because
+    an unmeasured package is not evidence of agreement.
+    """
+    if left is None or right is None:
+        return left is None and right is None
+    larger = max(left, right)
+    if larger <= 0:
+        return True
+    return abs(left - right) / larger <= tolerance

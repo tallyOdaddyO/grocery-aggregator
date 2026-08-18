@@ -25,6 +25,7 @@ from app.models import (
     Price, PriceObservation, Product, ProductVariant, Retailer, Store,
 )
 from app.services.search import SearchOutcome
+from app.services.units import sizes_equivalent
 
 
 @dataclass
@@ -252,17 +253,9 @@ def ingest_outcome(session: Session, outcome: SearchOutcome) -> IngestStats:
 
 
 def _size_matches(product: Product, size_key: float | None) -> bool:
-    """Whether a stored product has the same package size as the incoming item.
-
-    Both sizes unknown counts as a match; one known and one unknown does not -
-    we do not merge a sized product into an unsized one on a hunch.
-    """
+    """Whether a stored product has the same package size as the incoming item."""
     stored = (product.attributes or {}).get("_base_quantity")
-    stored = round(stored, 4) if stored else None
-    if stored is None or size_key is None:
-        return stored is None and size_key is None
-    larger = max(stored, size_key)
-    return abs(stored - size_key) / larger <= 0.02 if larger else True
+    return sizes_equivalent(round(stored, 4) if stored else None, size_key)
 
 
 def _aware(value: datetime) -> datetime:

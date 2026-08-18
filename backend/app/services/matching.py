@@ -17,6 +17,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field, replace
 
 from app.core.enums import MatchStage, UomKind
+from app.services.units import sizes_equivalent
 from app.services.normalization import (
     PackageSize, extract_attributes, normalize_brand, normalize_name,
     normalize_upc, parse_package_size,
@@ -273,11 +274,9 @@ def _size_relation(
             f"{a} and {b} are not comparable without a density",
         )
 
-    larger = max(a.value, b.value)
-    if larger == 0:
+    if max(a.value, b.value) == 0:
         return "unknown", "package size is zero"
-    difference = abs(a.value - b.value) / larger
-    if difference <= tolerance:
+    if sizes_equivalent(a.value, b.value, tolerance):
         return "equivalent", f"size equivalent ({left.unit_quantity} ≈ {right.unit_quantity})"
     return (
         "differs",

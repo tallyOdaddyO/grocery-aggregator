@@ -77,3 +77,24 @@ def no_price_published(timestamp: datetime) -> PriceData:
             is_fresh=False,
         ),
     )
+
+
+def price_data_from_product(product, fallback_time: datetime) -> PriceData:
+    """Render a connector product's price for the wire.
+
+    Shared by /search and /compare-basket so a price is never described one way in
+    a search result and another way inside a basket.
+    """
+    if product.price is None:
+        return no_price_published(fallback_time)
+    price = product.price
+    return PriceData(
+        sticker_price_cents=price.price_cents,
+        # The wire type is an int; every comparison and total uses the exact
+        # integer cents or the exact fractional unit price, never this rounding.
+        unit_price_cents=(
+            round(price.unit_price_cents) if price.unit_price_cents is not None else None
+        ),
+        unit_measure=price.unit_price_uom or "unknown",
+        provenance=provenance_out(price.provenance, price.observed_at, price.source_url),
+    )

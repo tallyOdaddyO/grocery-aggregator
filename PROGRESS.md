@@ -3,8 +3,8 @@
 Append-only status file. Updated at the end of every phase so context is never lost.
 
 **Target ZIP:** 33009 (Hallandale Beach, FL)
-**Current phase:** 5 — Core APIs
-**Last updated:** 2026-08-18 (Phase 5: /search and /product complete)
+**Current phase:** 6 — Frontend & UI
+**Last updated:** 2026-08-18 (Phase 5 complete)
 
 ---
 
@@ -217,7 +217,7 @@ Chavez listed as stocking it at no published price.
 **Tests: 245 passing** (up from 175).
 
 
-## Phase 5 — Core APIs 🟡 IN PROGRESS — `GET /search` complete
+## Phase 5 — Core APIs ✅ COMPLETE
 
 ### `GET /api/v1/search` ✅ COMPLETE
 
@@ -307,13 +307,66 @@ Refactor: provenance mapping moved to `app/api/v1/common.py` so `/search` and
 `/product` cannot drift apart and start describing the same price with different
 trust language.
 
-### Remaining in Phase 5 ⬜ NOT STARTED
-`POST /api/v1/compare-basket` — deliberately not started, per instruction.
+### `POST /api/v1/compare-basket` ✅ COMPLETE
 
-**Tests: 299 passing** (up from 245), including 53 FastAPI `TestClient` tests.
+**Cheapest complete (one stop).** Only a retailer stocking *every* requested item
+at a published price qualifies; the cheapest such retailer wins. `null` when no
+single retailer can fulfil the basket — including when any requested item is
+unavailable everywhere, since no single stop completes that basket either. A test
+independently enumerates every qualifying retailer's total and asserts the chosen
+one is minimal. Nothing is ever substituted from another store to manufacture a
+one-stop answer.
 
-## Phase 6 — Frontend & UI ⬜ NOT STARTED
-Dashboard, Search, Product Detail, Basket. **Blocked on Node/npm install.**
+**Cheapest split (multi-stop).** Globally cheapest source per line, grouped into
+one `RetailerTrip` per store, with `stop_count` so the convenience trade-off is
+explicit. A test asserts split is never more expensive than the single-stop plan.
+
+**Integer-cent math end to end.** `line_total_cents == sticker_price_cents ×
+quantity`, trip subtotals sum their lines, plan totals sum their trips — all
+asserted. No float dollars anywhere; a basket sums many lines and float error
+compounds.
+
+**Missing items are reported, never dropped.** `unavailable_items` distinguishes
+"no retailer returned a match" from "carried by rey_chavez but no published price
+is available" — the second is a real, different state. A basket of only unknown
+items returns 200 with both plans `null`.
+
+**Two fidelity issues caught while building it:**
+
+1. **A multi-buy price would have made a line total quietly wrong.** Presidente's
+   cola is `2 x $4.00`; the per-unit $2.00 does not apply if you buy one. Line
+   items now carry the adapter's `notes` (`multi_buy_required`,
+   `membership_required`, `price_from_circular`), with a test asserting the caveat
+   survives into the basket.
+2. **A retailer's outage could be laundered by an unrelated successful lookup.** A
+   basket runs several searches; health is now merged worst-wins per retailer, with
+   a test using a connector that succeeds on the first search and fails on the
+   second.
+
+**Documented semantics:** a free-text query resolves to *one* equivalence group —
+one brand at one size — because the matcher vetoes cross-brand and cross-size
+substitution. The basket compares like for like and will not silently swap in a
+different product to win on price. The group chosen is the one carried by the most
+distinct retailers (most comparable, most likely to permit a single stop), tie-broken
+on price.
+
+### Cross-cutting refactor
+The size-identity rule now lives once, in `units.sizes_equivalent()`, used by
+matching, grouping, and ingestion. The UPC-reuse defect had surfaced in all three;
+a single definition prevents a fourth divergence. Provenance and price rendering
+live once in `api/v1/common.py`, so `/search`, `/product`, and `/compare-basket`
+cannot describe the same price with different trust language.
+
+**Tests: 321 passing** (up from 245), including 75 FastAPI `TestClient` tests.
+
+## Phase 6 — Frontend & UI ⬜ NEXT
+Dashboard, Search, Product Detail, Basket.
+
+**Blocked on Node/npm**, which is still not installed on this machine. Per the
+Phase 2 decision, the intent is Docker Compose (or a local install) to provide
+Node, PostgreSQL, and Redis before Phases 6 and 7. The React/TypeScript source can
+be written without Node present, but it cannot be built, run, or tested here until
+that is resolved — flagging rather than silently shipping unverified UI code.
 
 ## Phase 7 — Live Integration & Workers ⬜ NOT STARTED
 ARQ jobs, backoff, rate limits, circuit breaker. **Blocked on Redis install.**

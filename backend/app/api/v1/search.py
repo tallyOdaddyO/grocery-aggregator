@@ -8,14 +8,11 @@ from fastapi import APIRouter, Depends, Query
 
 from app.connectors.base import NormalizedProduct
 from app.api.v1.common import (
-    FRESHNESS_TTL, STATUS_MAP, VERIFICATION_MAP, is_fresh, no_price_published,
-    provenance_out,
+    STATUS_MAP, price_data_from_product,
 )
 from app.core.config import get_settings
-from app.core.enums import PriceProvenance as InternalProvenance
 from app.schemas.search import (
-    ConnectorHealth, MatchGroup, PriceData, RetailerID, SearchProductSummary,
-    SearchResponse,
+    ConnectorHealth, MatchGroup, RetailerID, SearchProductSummary, SearchResponse,
 )
 from app.services.grouping import group_products
 from app.services.search import SearchOutcome, SearchService
@@ -32,28 +29,6 @@ def get_search_service() -> SearchService:
     return SearchService(source=settings.retailscout_source)
 
 
-def _to_price_data(product: NormalizedProduct, fallback_time: datetime) -> PriceData:
-    """Render a price for the wire, or an explicit 'no price published' record."""
-    if product.price is None:
-        # The retailer stocks the item but publishes no price. This is a real,
-        # reportable state - not an absence to be filled with an estimate.
-        return no_price_published(fallback_time)
-
-    price = product.price
-    return PriceData(
-        sticker_price_cents=price.price_cents,
-        # The wire type is an int; ranking server-side always uses the exact
-        # fractional value, never this rounded one.
-        unit_price_cents=(
-            round(price.unit_price_cents) if price.unit_price_cents is not None else None
-        ),
-        unit_measure=price.unit_price_uom or "unknown",
-        provenance=provenance_out(
-            price.provenance, price.observed_at, price.source_url
-        ),
-    )
-
-
 def _to_summary(
     product: NormalizedProduct, fallback_time: datetime
 ) -> SearchProductSummary | None:
@@ -68,7 +43,7 @@ def _to_summary(
         retailer=retailer,
         title=product.display_name,
         size_raw=product.size_text or "",
-        price=_to_price_data(product, fallback_time),
+        price=price_data_from_product(product, fallback_time),
     )
 
 

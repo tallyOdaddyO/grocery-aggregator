@@ -11,7 +11,8 @@ import time
 import pytest
 from fastapi.testclient import TestClient
 
-from app.api.v1.search import FRESHNESS_TTL, get_search_service
+from app.api.v1.common import FRESHNESS_TTL
+from app.api.v1.search import get_search_service
 from app.connectors.base import BaseRetailerConnector, StoreRef
 from app.connectors.registry import build_connectors
 from app.main import app
