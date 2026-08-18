@@ -1,0 +1,222 @@
+{
+  "query": "cheerios",
+  "zip_code": "33009",
+  "is_complete": false,
+  "connector_health": [
+    {
+      "retailer": "bjs",
+      "status": "ok",
+      "latency_ms": 2,
+      "error_reason": null
+    },
+    {
+      "retailer": "costco",
+      "status": "ok",
+      "latency_ms": 1,
+      "error_reason": null
+    },
+    {
+      "retailer": "fresco_y_mas",
+      "status": "ok",
+      "latency_ms": 2,
+      "error_reason": null
+    },
+    {
+      "retailer": "presidente",
+      "status": "ok",
+      "latency_ms": 2,
+      "error_reason": null
+    },
+    {
+      "retailer": "publix",
+      "status": "ok",
+      "latency_ms": 1,
+      "error_reason": null
+    },
+    {
+      "retailer": "rey_chavez",
+      "status": "degraded",
+      "latency_ms": 2,
+      "error_reason": "Rey Chavez Distributors lists 1 matching item(s) but publishes no consumer prices."
+    },
+    {
+      "retailer": "walmart",
+      "status": "ok",
+      "latency_ms": 1,
+      "error_reason": null
+    },
+    {
+      "retailer": "winn_dixie",
+      "status": "ok",
+      "latency_ms": 1,
+      "error_reason": null
+    }
+  ],
+  "results": [
+    {
+      "group_id": "319a537abfa46878",
+      "canonical_name": "CHEERIOS CEREAL 12 OZ",
+      "match_type": "upc",
+      "items": [
+        {
+          "id": "fresco_y_mas:FM-51002",
+          "retailer": "fresco_y_mas",
+          "title": "Cereal Cheerios 12 OZ",
+          "size_raw": "12 oz",
+          "price": {
+            "sticker_price_cents": 529,
+            "unit_price_cents": 705,
+            "unit_measure": "lb",
+            "provenance": {
+              "status": "verified_online",
+              "timestamp": "2026-08-18T00:30:00Z",
+              "source_url": null,
+              "verification_method": "verified_online",
+              "is_fresh": true
+            }
+          }
+        },
+        {
+          "id": "publix:P-1002",
+          "retailer": "publix",
+          "title": "Cheerios Cereal, 12-oz box",
+          "size_raw": "12 oz",
+          "price": {
+            "sticker_price_cents": 350,
+            "unit_price_cents": 467,
+            "unit_measure": "lb",
+            "provenance": {
+              "status": "verified_online",
+              "timestamp": "2026-08-18T00:30:00Z",
+              "source_url": null,
+              "verification_method": "verified_online",
+              "is_fresh": true
+            }
+          }
+        },
+        {
+          "id": "walmart:10291024",
+          "retailer": "walmart",
+          "title": "CHEERIOS ORIGINAL CEREAL, 12 OZ BOX",
+          "size_raw": "12 oz",
+          "price": {
+            "sticker_price_cents": 448,
+            "unit_price_cents": 597,
+            "unit_measure": "lb",
+            "provenance": {
+              "status": "verified_online",
+              "timestamp": "2026-08-18T00:30:00Z",
+              "source_url": null,
+              "verification_method": "verified_online",
+              "is_fresh": true
+            }
+          }
+        },
+        {
+          "id": "winn_dixie:WD-77002",
+          "retailer": "winn_dixie",
+          "title": "Cheerios Toasted Whole Grain Oat Cereal 12 OZ",
+          "size_raw": "12 oz",
+          "price": {
+            "sticker_price_cents": 499,
+            "unit_price_cents": 665,
+            "unit_measure": "lb",
+            "provenance": {
+              "status": "verified_online",
+              "timestamp": "2026-08-18T00:30:00Z",
+              "source_url": null,
+              "verification_method": "verified_online",
+              "is_fresh": true
+            }
+          }
+        },
+        {
+          "id": "presidente:PS-9002",
+          "retailer": "presidente",
+          "title": "CHEERIOS CEREAL 12 OZ",
+          "size_raw": "12 oz",
+          "price": {
+            "sticker_price_cents": 599,
+            "unit_price_cents": 799,
+            "unit_measure": "lb",
+            "provenance": {
+              "status": "estimated",
+              "timestamp": "2026-08-18T00:30:00Z",
+              "source_url": null,
+              "verification_method": "estimated",
+              "is_fresh": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "group_id": "b441b2eacf938da1",
+      "canonical_name": "Cheerios Original, 2 pk, 20.35 oz",
+      "match_type": "fuzzy",
+      "items": [
+        {
+          "id": "bjs:300045",
+          "retailer": "bjs",
+          "title": "Cheerios Original, 2 pk, 20.35 oz",
+          "size_raw": "2 x 20.35 oz",
+          "price": {
+            "sticker_price_cents": 899,
+            "unit_price_cents": 353,
+            "unit_measure": "lb",
+            "provenance": {
+              "status": "verified_online",
+              "timestamp": "2026-08-18T00:30:00Z",
+              "source_url": null,
+              "verification_method": "verified_online",
+              "is_fresh": true
+            }
+          }
+        },
+        {
+          "id": "costco:1119693",
+          "retailer": "costco",
+          "title": "Cheerios Original Cereal, 20.35 oz, 2-pack",
+          "size_raw": "2 x 20.35 oz",
+          "price": {
+            "sticker_price_cents": 949,
+            "unit_price_cents": 373,
+            "unit_measure": "lb",
+            "provenance": {
+              "status": "delivery_price",
+              "timestamp": "2026-08-18T00:30:00Z",
+              "source_url": null,
+              "verification_method": "delivery_price",
+              "is_fresh": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "group_id": "d8398cba4e3c6103",
+      "canonical_name": "Cheerios 12 oz (case of 12)",
+      "match_type": "singleton",
+      "items": [
+        {
+          "id": "rey_chavez:RC-1002",
+          "retailer": "rey_chavez",
+          "title": "Cheerios 12 oz (case of 12)",
+          "size_raw": "12 x 12 oz",
+          "price": {
+            "sticker_price_cents": null,
+            "unit_price_cents": null,
+            "unit_measure": "unknown",
+            "provenance": {
+              "status": "no_price_published",
+              "timestamp": "2026-08-18T05:41:18.870385Z",
+              "source_url": null,
+              "verification_method": "no_price_published",
+              "is_fresh": false
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

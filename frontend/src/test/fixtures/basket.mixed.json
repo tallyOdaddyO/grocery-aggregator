@@ -1,0 +1,167 @@
+{
+  "zip_code": "33009",
+  "is_complete": false,
+  "connector_health": [
+    {
+      "retailer": "bjs",
+      "status": "degraded",
+      "latency_ms": 0,
+      "error_reason": "No usable results for 'unobtainium'."
+    },
+    {
+      "retailer": "costco",
+      "status": "degraded",
+      "latency_ms": 1,
+      "error_reason": "No usable results for 'unobtainium'."
+    },
+    {
+      "retailer": "fresco_y_mas",
+      "status": "degraded",
+      "latency_ms": 0,
+      "error_reason": "No usable results for 'unobtainium'."
+    },
+    {
+      "retailer": "presidente",
+      "status": "degraded",
+      "latency_ms": 0,
+      "error_reason": "No usable results for 'unobtainium'."
+    },
+    {
+      "retailer": "publix",
+      "status": "degraded",
+      "latency_ms": 0,
+      "error_reason": "No usable results for 'unobtainium'."
+    },
+    {
+      "retailer": "rey_chavez",
+      "status": "degraded",
+      "latency_ms": 1,
+      "error_reason": "Rey Chavez Distributors lists 1 matching item(s) but publishes no consumer prices."
+    },
+    {
+      "retailer": "walmart",
+      "status": "degraded",
+      "latency_ms": 0,
+      "error_reason": "No usable results for 'unobtainium'."
+    },
+    {
+      "retailer": "winn_dixie",
+      "status": "degraded",
+      "latency_ms": 0,
+      "error_reason": "No usable results for 'unobtainium'."
+    }
+  ],
+  "cheapest_complete": null,
+  "cheapest_split": {
+    "strategy": "split",
+    "trips": [
+      {
+        "retailer": "fresco_y_mas",
+        "store_number": "0512",
+        "items": [
+          {
+            "query": "milk",
+            "quantity": 1,
+            "product_id": "fresco_y_mas:FM-51001",
+            "retailer": "fresco_y_mas",
+            "title": "Leche Entera / Whole Milk 1 GAL",
+            "size_raw": "1 gal",
+            "price": {
+              "sticker_price_cents": 369,
+              "unit_price_cents": 3,
+              "unit_measure": "fl_oz",
+              "provenance": {
+                "status": "verified_online",
+                "timestamp": "2026-08-18T00:30:00Z",
+                "source_url": null,
+                "verification_method": "verified_online",
+                "is_fresh": true
+              }
+            },
+            "line_total_cents": 369,
+            "notes": []
+          }
+        ],
+        "subtotal_cents": 369
+      },
+      {
+        "retailer": "presidente",
+        "store_number": "PS-27",
+        "items": [
+          {
+            "query": "cola",
+            "quantity": 1,
+            "product_id": "presidente:PS-9003",
+            "retailer": "presidente",
+            "title": "Coca-Cola 2 Litros",
+            "size_raw": "2 l",
+            "price": {
+              "sticker_price_cents": 200,
+              "unit_price_cents": 3,
+              "unit_measure": "fl_oz",
+              "provenance": {
+                "status": "estimated",
+                "timestamp": "2026-08-18T00:30:00Z",
+                "source_url": null,
+                "verification_method": "estimated",
+                "is_fresh": true
+              }
+            },
+            "line_total_cents": 200,
+            "notes": [
+              "multi_buy_required",
+              "price_from_circular",
+              "promotion_end_date_missing",
+              "upc_missing"
+            ]
+          }
+        ],
+        "subtotal_cents": 200
+      },
+      {
+        "retailer": "publix",
+        "store_number": "0479",
+        "items": [
+          {
+            "query": "cheerios",
+            "quantity": 2,
+            "product_id": "publix:P-1002",
+            "retailer": "publix",
+            "title": "Cheerios Cereal, 12-oz box",
+            "size_raw": "12 oz",
+            "price": {
+              "sticker_price_cents": 350,
+              "unit_price_cents": 467,
+              "unit_measure": "lb",
+              "provenance": {
+                "status": "verified_online",
+                "timestamp": "2026-08-18T00:30:00Z",
+                "source_url": null,
+                "verification_method": "verified_online",
+                "is_fresh": true
+              }
+            },
+            "line_total_cents": 700,
+            "notes": [
+              "ambiguous_oz",
+              "multi_buy_required",
+              "promotion_end_date_missing"
+            ]
+          }
+        ],
+        "subtotal_cents": 700
+      }
+    ],
+    "total_cents": 1269,
+    "item_count": 4,
+    "stop_count": 3
+  },
+  "savings_cents": null,
+  "unavailable_items": [
+    {
+      "query": "unobtainium",
+      "quantity": 1,
+      "reason": "No retailer in ZIP 33009 returned a match for 'unobtainium'."
+    }
+  ]
+}

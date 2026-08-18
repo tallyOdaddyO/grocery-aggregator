@@ -4,7 +4,7 @@ Append-only status file. Updated at the end of every phase so context is never l
 
 **Target ZIP:** 33009 (Hallandale Beach, FL)
 **Current phase:** 6 — Frontend & UI
-**Last updated:** 2026-08-18 (Phase 5 complete)
+**Last updated:** 2026-08-18 (Phase 6 in progress: toolchain + core components)
 
 ---
 
@@ -14,7 +14,7 @@ Append-only status file. Updated at the end of every phase so context is never l
 |---|---|
 | Python | 3.11.5 ✅ |
 | git | 2.39.2 ✅ |
-| Node / npm | ❌ not installed — frontend (Phase 6) cannot be built or run locally yet |
+| Node / npm | ✅ v24.19.0 / npm 11.17.0 — installed 2026-08-18, see below |
 | PostgreSQL | ❌ not installed — dev/test uses SQLite; PG remains the production target |
 | Redis | ❌ not installed — workers (Phase 7) can be written but not executed locally |
 
@@ -359,14 +359,71 @@ cannot describe the same price with different trust language.
 
 **Tests: 321 passing** (up from 245), including 75 FastAPI `TestClient` tests.
 
-## Phase 6 — Frontend & UI ⬜ NEXT
-Dashboard, Search, Product Detail, Basket.
+## Phase 6 — Frontend & UI 🟡 IN PROGRESS
 
-**Blocked on Node/npm**, which is still not installed on this machine. Per the
-Phase 2 decision, the intent is Docker Compose (or a local install) to provide
-Node, PostgreSQL, and Redis before Phases 6 and 7. The React/TypeScript source can
-be written without Node present, but it cannot be built, run, or tested here until
-that is resolved — flagging rather than silently shipping unverified UI code.
+### Environment setup ✅ COMPLETE
+
+Node **v24.19.0 (LTS "Krypton")** with npm **11.17.0**, installed 2026-08-18.
+
+- No `brew`, `nvm`, or `node` existed; `/usr/local` requires root, `$HOME` does not.
+- Installed from the **official** `nodejs.org` distribution:
+  `node-v24.19.0-darwin-arm64.tar.xz` (26 MB), SHA-256 verified against Node's
+  published `SHASUMS256.txt` → `OK`.
+- Extracted to `~/.local/node`. **No `sudo` was used and `~/.zshrc` was not
+  modified** — changing a shell profile is a persistent config change that is the
+  user's to approve. Run `. scripts/env.sh` (or add the export permanently) to put
+  it on PATH.
+- npm 11 blocks package install scripts by default; esbuild's postinstall was
+  blocked but its platform binary arrived via `optionalDependencies`, so **no
+  install scripts needed approval**. Verified by running the toolchain.
+
+Toolchain verified working: `vitest` runs, `tsc --noEmit` passes, `vite build`
+produces a bundle.
+
+### Stack
+Vite 6 + React 19 + TypeScript 5.7 (strict, `noUncheckedIndexedAccess`), Vitest 2 +
+Testing Library + jsdom. API proxied at `/api` to `localhost:8000`.
+
+### Components built (test-first) ✅
+
+- **`lib/format.ts`** — `formatCheckedAt` mirrors the backend's freshness wording
+  exactly, so a price never appears checked at two different times depending on
+  which surface renders it. Clamped at zero so clock skew can never read "checked
+  in 3 minutes". `formatCents(null)` returns an em dash, never `$0.00`.
+  `formatUnitPrice` returns **null** when the size was unparseable, so no caller
+  can render a comparison figure for a package we could not measure.
+- **`PriceTag`** — sticker and unit price as visually and semantically separate
+  figures, with a test asserting the sticker never contains a `/`. Each provenance
+  grade gets distinct wording; `verified_online` reads *"Retailer price, not
+  shelf-checked"*, which is the whole reason that enum value was added. Stale
+  prices are marked *"may be out of date"* rather than shown as current. An
+  unpriced-but-stocked item reads *"Price on request"*.
+- **`MatchExplanation`** — confidence, match stage, the veto checks that passed,
+  any that failed, and the contributing signals. A check that was **not evaluated**
+  is reported as *"could not be verified"* rather than omitted, so "passed" always
+  means "we actually checked it".
+- **`BasketComparison`** — one-stop vs shopping-around, side by side, with
+  **stop count as prominent as the money**: saving a dollar across three stores is
+  not obviously better and the UI should not imply it is. Renders the honest
+  "no single store nearby stocks every item" state, groups split lines under the
+  store you would visit, surfaces multi-buy caveats on the line they apply to, and
+  warns when a degraded connector made the comparison incomplete.
+
+### Contract tests against real API payloads ✅
+Component unit tests use hand-written fixtures, which drift. `src/test/contract.test.tsx`
+renders the components against payloads **captured verbatim from the running
+FastAPI app** (`search.cheerios.json`, `basket.mixed.json`), asserting the wire
+shape, that every priced item carries provenance and a parseable timestamp, that
+line totals are exact integer cents, and that `verified_online` and
+`multi_buy_required` still arrive. A backend wire change now breaks a test rather
+than the user's browser.
+
+**Frontend tests: 50 passing.** Typecheck and production build both clean.
+
+### Remaining in Phase 6 ⬜
+Dashboard, Search page, Product Detail page, and Basket page wiring these
+components to the API (the components are unit- and contract-tested but not yet
+imported by `App`, so they are currently tree-shaken out of the bundle).
 
 ## Phase 7 — Live Integration & Workers ⬜ NOT STARTED
 ARQ jobs, backoff, rate limits, circuit breaker. **Blocked on Redis install.**
