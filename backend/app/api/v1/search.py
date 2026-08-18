@@ -2,17 +2,20 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, Query
 
 from app.connectors.base import NormalizedProduct
+from app.api.v1.common import (
+    FRESHNESS_TTL, STATUS_MAP, VERIFICATION_MAP, is_fresh, no_price_published,
+    provenance_out,
+)
 from app.core.config import get_settings
 from app.core.enums import PriceProvenance as InternalProvenance
-from app.core.enums import RetailerStatus
 from app.schemas.search import (
-    ConnectorHealth, ConnectorStatus, MatchGroup, PriceData, PriceProvenance,
-    RetailerID, SearchProductSummary, SearchResponse, VerificationMethod,
+    ConnectorHealth, MatchGroup, PriceData, RetailerID, SearchProductSummary,
+    SearchResponse,
 )
 from app.services.grouping import group_products
 from app.services.search import SearchOutcome, SearchService
@@ -21,30 +24,6 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1", tags=["search"])
 
-#: A price older than this is reported as not fresh. Deliberately conservative:
-#: grocery prices move weekly, and a stale price shown as current is a lie the
-#: shopper only discovers at the register.
-FRESHNESS_TTL = timedelta(hours=24)
-
-_STATUS_MAP = {
-    RetailerStatus.ACTIVE: ConnectorStatus.OK,
-    RetailerStatus.DEGRADED: ConnectorStatus.DEGRADED,
-    RetailerStatus.UNAVAILABLE: ConnectorStatus.UNAVAILABLE,
-}
-
-#: Internal grade -> wire enum.
-#:
-#: ``verified_online`` has no slot in VerificationMethod and is our most common
-#: grade. It maps DOWN to ``estimated``, never up to ``verified_in_store``:
-#: overstating verification is the one error this system must never make. The
-#: exact grade survives in ``PriceProvenance.status``.
-_VERIFICATION_MAP = {
-    InternalProvenance.VERIFIED_IN_STORE: VerificationMethod.VERIFIED_IN_STORE,
-    InternalProvenance.VERIFIED_ONLINE: VerificationMethod.ESTIMATED,
-    InternalProvenance.DELIVERY_PRICE: VerificationMethod.DELIVERY_PRICE,
-    InternalProvenance.ESTIMATED: VerificationMethod.ESTIMATED,
-    InternalProvenance.STALE: VerificationMethod.ESTIMATED,
-}
 
 
 def get_search_service() -> SearchService:
@@ -58,28 +37,9 @@ def _to_price_data(product: NormalizedProduct, fallback_time: datetime) -> Price
     if product.price is None:
         # The retailer stocks the item but publishes no price. This is a real,
         # reportable state - not an absence to be filled with an estimate.
-        return PriceData(
-            sticker_price_cents=None,
-            unit_price_cents=None,
-            unit_measure="unknown",
-            provenance=PriceProvenance(
-                status="no_price_published",
-                timestamp=fallback_time,
-                source_url=None,
-                verification_method=VerificationMethod.NO_PRICE_PUBLISHED,
-                is_fresh=False,
-            ),
-        )
+        return no_price_published(fallback_time)
 
     price = product.price
-    observed = price.observed_at
-    if observed.tzinfo is None:
-        observed = observed.replace(tzinfo=timezone.utc)
-    is_fresh = (
-        price.provenance is not InternalProvenance.STALE
-        and datetime.now(timezone.utc) - observed <= FRESHNESS_TTL
-    )
-
     return PriceData(
         sticker_price_cents=price.price_cents,
         # The wire type is an int; ranking server-side always uses the exact
@@ -88,12 +48,8 @@ def _to_price_data(product: NormalizedProduct, fallback_time: datetime) -> Price
             round(price.unit_price_cents) if price.unit_price_cents is not None else None
         ),
         unit_measure=price.unit_price_uom or "unknown",
-        provenance=PriceProvenance(
-            status=price.provenance.value,
-            timestamp=observed,
-            source_url=price.source_url,
-            verification_method=_VERIFICATION_MAP[price.provenance],
-            is_fresh=is_fresh,
+        provenance=provenance_out(
+            price.provenance, price.observed_at, price.source_url
         ),
     )
 
@@ -127,7 +83,7 @@ def build_response(outcome: SearchOutcome) -> SearchResponse:
         health.append(
             ConnectorHealth(
                 retailer=retailer,
-                status=_STATUS_MAP[report.status],
+                status=STATUS_MAP[report.status],
                 latency_ms=report.elapsed_ms,
                 error_reason=report.reason,
             )

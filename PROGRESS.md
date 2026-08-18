@@ -4,7 +4,7 @@ Append-only status file. Updated at the end of every phase so context is never l
 
 **Target ZIP:** 33009 (Hallandale Beach, FL)
 **Current phase:** 5 — Core APIs
-**Last updated:** 2026-08-18 (Phase 5 partial: GET /search complete)
+**Last updated:** 2026-08-18 (Phase 5: /search and /product complete)
 
 ---
 
@@ -257,25 +257,60 @@ Also fixed: timed-out connectors reported `latency_ms: 0`; they now report the t
 actually spent waiting. And `size_raw` echoed the entire product title when a
 retailer supplied no size field; it now renders the parsed package (`24 x 12 fl oz`).
 
-### ⚠️ Schema fidelity issue — needs a decision
+### ✅ Schema fidelity issue — RESOLVED
 
-`VerificationMethod` has no slot for **`verified_online`**, which is **18 of 24**
-priced observations — the most common grade the connectors produce (Walmart, BJ's,
-Publix, Winn-Dixie, Fresco y Más all publish store-scoped prices that are real but
-not shelf-verified).
+`VERIFIED_ONLINE = "verified_online"` added to `VerificationMethod` and mapped
+one-to-one in `VERIFICATION_MAP` (approved). A live store-scoped retailer price is
+now distinguishable on the wire from a circular-derived estimate. `stale` remains
+unmapped by design — it is an age state, not a method, and is communicated through
+`is_fresh=False`.
 
-It is currently mapped **down** to `estimated`, never up to `verified_in_store`,
-because overstating verification is the one error this system must never make. The
-exact grade is preserved verbatim in the free-form `PriceProvenance.status`, so
-nothing is lost on the wire — but a client reading only `verification_method`
-cannot distinguish a live Publix ad price from a Presidente circular estimate.
-**Recommendation: add `VERIFIED_ONLINE = "verified_online"` to the enum.**
+### `GET /api/v1/product/{id}` ✅ COMPLETE
+
+**Prerequisite built first: persistence.** Phase 2 created `price_observations`
+but nothing wrote to it — Phase 4 connectors returned in-memory results only. So
+`app/services/ingest.py` was added: it upserts retailers, stores, products, and
+variants, updates `prices` (one row per variant+store), and **appends** to
+`price_observations` on every observation. The append is what makes a displayed
+price defensible; without it an update overwrites its own evidence.
+
+**Endpoint** accepts both the composite `retailer:sku` that `/search` emits and a
+numeric variant id. A malformed or unknown id is a **404**, never a 500.
+
+**History** is ordered `observed_at DESC, id DESC` — true chronology, not insertion
+order. Tested by ingesting three refreshes deliberately out of order. Every
+observation is retained: five ingests produce five distinct rows, none collapsed.
+A late-arriving *older* observation is logged but does **not** overwrite a newer
+current price.
+
+**Distinct prices** — `sticker_price_cents` and `unit_price_cents` are separate
+fields throughout, with a test asserting BJ's club pack costs more at the till
+while winning on unit price.
+
+**Veto transparency** — `confidence_stats.veto_checks_passed` surfaces the Stage 2
+constraints that were evaluated *and* cleared (`unit_dimension`, `package_size`,
+`variant_attributes`, `brand`), alongside `veto_checks_failed`, structured
+`signals`, and a human `explanation`. A check that could **not** be evaluated (an
+unparseable size, a brand missing on one side) is **absent rather than listed** —
+this reports what was verified, never what was assumed, and there is a test for
+exactly that. `equivalent_products` are filtered by the same veto rules, so the
+12 oz box never lists the 2 × 20.35 oz club pack as equivalent.
+
+**One more instance of the UPC-reuse bug, found and fixed.** `ingest.py` initially
+resolved product identity by UPC alone, so BJ's 2 × 20.35 oz club pack was being
+merged into the same canonical product as the 12 oz boxes — directly contradicting
+the matcher's size veto and the `group_id` fix. Product identity now requires
+size agreement (2% tolerance) in addition to a matching UPC. This is the third
+place the same real-world defect surfaced: matching, grouping, and now storage.
+
+Refactor: provenance mapping moved to `app/api/v1/common.py` so `/search` and
+`/product` cannot drift apart and start describing the same price with different
+trust language.
 
 ### Remaining in Phase 5 ⬜ NOT STARTED
-`GET /api/v1/product/{id}` and `POST /api/v1/compare-basket` — deliberately not
-started, per instruction.
+`POST /api/v1/compare-basket` — deliberately not started, per instruction.
 
-**Tests: 269 passing** (up from 245), including 24 FastAPI `TestClient` tests.
+**Tests: 299 passing** (up from 245), including 53 FastAPI `TestClient` tests.
 
 ## Phase 6 — Frontend & UI ⬜ NOT STARTED
 Dashboard, Search, Product Detail, Basket. **Blocked on Node/npm install.**

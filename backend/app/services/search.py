@@ -55,6 +55,9 @@ class SearchOutcome:
     zip_code: str
     products: list[NormalizedProduct] = field(default_factory=list)
     reports: list[RetailerReport] = field(default_factory=list)
+    #: Resolved store per retailer slug. Carried so ingestion can persist the
+    #: location a price was actually observed at, rather than guessing it later.
+    stores: dict = field(default_factory=dict)
     searched_at: datetime = field(
         default_factory=lambda: datetime.now(timezone.utc)
     )
@@ -158,6 +161,8 @@ class SearchService:
                     continue
 
                 outcome.products.extend(result.products)
+                if result.store is not None:
+                    outcome.stores[result.retailer_slug] = result.store
                 outcome.reports.append(
                     RetailerReport(
                         slug=result.retailer_slug,

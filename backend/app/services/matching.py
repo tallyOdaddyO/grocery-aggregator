@@ -88,6 +88,16 @@ class MatchSignal:
         return {"name": self.name, "detail": self.detail, "weight": float(self.weight)}
 
 
+#: The Stage 2 hard constraints, in evaluation order. Named here so the API can
+#: report which ones a match actually cleared rather than merely asserting a score.
+VETO_CHECKS: tuple[str, ...] = (
+    "unit_dimension",      # mass vs volume vs count
+    "package_size",        # total base quantity within tolerance
+    "variant_attributes",  # organic, decaf, low fat, ...
+    "brand",
+)
+
+
 @dataclass(frozen=True)
 class MatchResult:
     confidence: float
@@ -96,6 +106,12 @@ class MatchResult:
     vetoed: bool = False
     veto_reason: str | None = None
     threshold: float = DEFAULT_CONFIG.fuzzy_threshold
+    #: Which hard constraints were evaluated AND passed. A check that could not be
+    #: evaluated (an unparseable size, a brand missing on one side) is absent
+    #: rather than listed - we report what we verified, not what we assumed.
+    veto_checks_passed: tuple[str, ...] = ()
+    #: Checks that were evaluated and failed. At most one, since a veto is final.
+    veto_checks_failed: tuple[str, ...] = ()
 
     @property
     def is_match(self) -> bool:
@@ -122,6 +138,8 @@ class MatchResult:
             "is_match": self.is_match,
             "threshold": float(self.threshold),
             "summary": self.summary,
+            "veto_checks_passed": list(self.veto_checks_passed),
+            "veto_checks_failed": list(self.veto_checks_failed),
         }
 
 
@@ -315,14 +333,31 @@ def match(
             )
 
     veto_reason: str | None = None
+    failed_check: str | None = None
     if size_state == "dimension":
-        veto_reason = size_detail
+        veto_reason, failed_check = size_detail, "unit_dimension"
     elif size_state == "differs":
-        veto_reason = size_detail
+        veto_reason, failed_check = size_detail, "package_size"
     elif attribute_conflict:
-        veto_reason = attribute_conflict
+        veto_reason, failed_check = attribute_conflict, "variant_attributes"
     elif brand_conflict:
-        veto_reason = brand_conflict
+        veto_reason, failed_check = brand_conflict, "brand"
+
+    # Record only the constraints we could actually evaluate and that passed.
+    passed: list[str] = []
+    if size_state == "equivalent":
+        passed.extend(("unit_dimension", "package_size"))
+    elif size_state == "dimension":
+        pass  # dimension itself failed
+    if attribute_conflict is None and (left.attributes or right.attributes):
+        passed.append("variant_attributes")
+    if (
+        brand_conflict is None
+        and left.normalized_brand
+        and right.normalized_brand
+    ):
+        passed.append("brand")
+    checks_passed = tuple(c for c in VETO_CHECKS if c in passed)
 
     upc_equal = bool(left.upc and right.upc and left.upc == right.upc)
 
@@ -351,6 +386,8 @@ def match(
             vetoed=True,
             veto_reason=veto_reason,
             threshold=config.fuzzy_threshold,
+            veto_checks_passed=checks_passed,
+            veto_checks_failed=(failed_check,) if failed_check else (),
         )
 
     # --- Stage 1: identity.
@@ -363,6 +400,7 @@ def match(
             stage=MatchStage.UPC,
             signals=tuple(signals),
             threshold=config.fuzzy_threshold,
+            veto_checks_passed=checks_passed,
         )
 
     # --- Stages 2 and 3: weighted blend.
@@ -411,4 +449,5 @@ def match(
         stage=stage,
         signals=tuple(signals),
         threshold=config.fuzzy_threshold,
+        veto_checks_passed=checks_passed,
     )

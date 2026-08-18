@@ -2,13 +2,11 @@
 
 These models are the external contract and are defined exactly as specified.
 
-A note on :class:`VerificationMethod`: the internal grade ``verified_online`` (a
-price published by the retailer and resolved to the local store) has no slot in
-this enum, and it is the most common grade our connectors produce. It is mapped
-**downward** to ``ESTIMATED`` rather than upward to ``VERIFIED_IN_STORE``, because
-claiming a shelf verification we do not have is the one error this system must
-never make. The precise internal grade is preserved verbatim in
-:attr:`PriceProvenance.status`, so no information is lost on the wire.
+:class:`VerificationMethod` carries ``verified_online`` as a first-class grade, so
+a live store-scoped retailer price is distinguishable from a circular-derived
+estimate. ``stale`` has no slot and maps to the underlying method with
+``is_fresh=False``; the precise internal grade is always preserved verbatim in
+:attr:`PriceProvenance.status`.
 """
 from __future__ import annotations
 
@@ -32,6 +30,10 @@ class RetailerID(str, Enum):
 
 class VerificationMethod(str, Enum):
     VERIFIED_IN_STORE = "verified_in_store"
+    #: A live, store-scoped price published by the retailer. Real, but not
+    #: confirmed against the shelf - the distinction between a Publix ad price and
+    #: a Presidente circular estimate, which the provenance principle requires.
+    VERIFIED_ONLINE = "verified_online"
     DELIVERY_PRICE = "delivery_price"
     ESTIMATED = "estimated"
     NO_PRICE_PUBLISHED = "no_price_published"
