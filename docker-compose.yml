@@ -1,0 +1,49 @@
+# Local service dependencies for RetailScout.
+#
+#   docker compose up -d
+#   DATABASE_URL=postgresql+psycopg://retailscout:retailscout@localhost:5432/retailscout \
+#     alembic upgrade head
+#
+# Postgres is the production target: the schema compiles JSONB (not JSON) and
+# creates GIN indexes on products.attributes and product_matches.signals, neither
+# of which SQLite can express. Redis backs the ARQ worker queue.
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: retailscout-postgres
+    environment:
+      POSTGRES_USER: retailscout
+      POSTGRES_PASSWORD: retailscout
+      POSTGRES_DB: retailscout
+      # Deterministic collation so ORDER BY does not drift between machines.
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    ports:
+      - "5432:5432"
+    volumes:
+      - retailscout-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # The app and the migration job must not start before the server accepts
+      # connections, or the first migration fails on a cold boot.
+      test: ["CMD-SHELL", "pg_isready -U retailscout -d retailscout"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: retailscout-redis
+    # Persistence is off on purpose: the queue holds refresh jobs, which are
+    # cheap to regenerate and must never be replayed stale after a restart.
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  retailscout-pgdata:

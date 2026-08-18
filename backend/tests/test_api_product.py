@@ -26,17 +26,16 @@ ZIP = "33009"
 
 @pytest.fixture
 def db_session():
-    # TestClient serves requests on a different thread than the fixture, so the
-    # in-memory database needs a shared connection that permits cross-thread use.
-    engine = create_engine(
-        "sqlite://",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
-    Base.metadata.create_all(engine)
+    # TestClient serves requests on a different thread than the fixture, so a
+    # SQLite database needs a shared connection permitting cross-thread use.
+    # make_engine() handles that and honours RETAILSCOUT_TEST_DB.
+    from tests.conftest import make_engine
+
+    engine = make_engine()
     factory = sessionmaker(bind=engine, expire_on_commit=False)
     with factory() as session:
         yield session
+    Base.metadata.drop_all(engine)
     engine.dispose()
 
 

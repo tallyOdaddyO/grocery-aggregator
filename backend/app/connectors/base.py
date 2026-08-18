@@ -25,6 +25,9 @@ from app.services.normalization import (
     extract_attributes, normalize_brand, normalize_name, normalize_upc,
     parse_package_size,
 )
+from app.connectors.http import (
+    BlockedError, LiveFetchError, LiveUnsupported, PoliteClient,
+)
 from app.services.pricing import compute_unit_price
 
 
@@ -197,8 +200,16 @@ class BaseRetailerConnector(ABC):
     #: specific price, but may never upgrade past this.
     default_provenance: PriceProvenance = PriceProvenance.ESTIMATED
 
-    def __init__(self, source: str = "fixture") -> None:
+    def __init__(self, source: str = "fixture", client: PoliteClient | None = None) -> None:
         self.source = source
+        self._client = client
+        #: Set during a search when a live attempt failed and fixtures were used
+        #: instead. Everything produced in that state is marked accordingly.
+        self._fallback_reason: str | None = None
+
+    @property
+    def using_fixture_fallback(self) -> bool:
+        return self._fallback_reason is not None
 
     # --- hooks ------------------------------------------------------------- #
 
@@ -213,6 +224,18 @@ class BaseRetailerConnector(ABC):
     @abstractmethod
     def parse_item(self, raw: dict, store: StoreRef) -> NormalizedProduct | None:
         """Map one raw record to a product, or None to skip it deliberately."""
+
+    def fetch_live(self, term: str, store: StoreRef) -> list[dict]:
+        """Fetch from the retailer's real endpoint.
+
+        The default is to refuse: we have no lawful, documented way into most of
+        these retailers, and guessing at private endpoints or working around bot
+        protection is out of scope by design. An adapter overrides this only when
+        it has a permitted API and the credentials to use it.
+        """
+        raise LiveUnsupported(
+            f"No permitted live endpoint is configured for {self.name}."
+        )
 
     # --- helper available to every adapter --------------------------------- #
 
@@ -261,6 +284,12 @@ class BaseRetailerConnector(ABC):
         price: NormalizedPrice | None = None
         if price_cents is not None and price_cents > 0:
             grade = provenance or self.default_provenance
+            if self.using_fixture_fallback:
+                # Fixture data may never wear a live grade. It is recorded as an
+                # estimate and tagged, so nothing downstream - or the UI - can
+                # present cached sample data as a price we just observed.
+                grade = PriceProvenance.ESTIMATED
+                notes.append("fixture_fallback")
             unit = compute_unit_price(price_cents, package)
             if promotion_type is not PromotionType.NONE and promotion_ends_at is None:
                 notes.append("promotion_end_date_missing")
@@ -341,14 +370,43 @@ class BaseRetailerConnector(ABC):
                 reason=f"No {self.name} store could be resolved for ZIP {zip_code}.",
             )
 
-        try:
-            raw_records = self.fetch_raw(term, store)
-        except Exception as exc:
-            return finish(
-                status=RetailerStatus.DEGRADED,
-                store=store,
-                reason=f"Search failed: {type(exc).__name__}: {exc}",
-            )
+        self._fallback_reason = None
+        blocked = False
+
+        if self.source == "live":
+            try:
+                raw_records = self.fetch_live(term, store)
+            except LiveFetchError as exc:
+                # Blocked, unsupported, or transiently broken. All three mean the
+                # same thing here: we have no live data, so say so and fall back.
+                blocked = isinstance(exc, BlockedError)
+                self._fallback_reason = str(exc)
+                try:
+                    raw_records = self.fetch_raw(term, store)
+                except Exception as fixture_exc:
+                    return finish(
+                        status=RetailerStatus.UNAVAILABLE,
+                        store=store,
+                        reason=(
+                            f"Live fetch failed ({exc}) and no fixture is "
+                            f"available: {type(fixture_exc).__name__}: {fixture_exc}"
+                        ),
+                    )
+            except Exception as exc:
+                return finish(
+                    status=RetailerStatus.DEGRADED,
+                    store=store,
+                    reason=f"Live fetch failed: {type(exc).__name__}: {exc}",
+                )
+        else:
+            try:
+                raw_records = self.fetch_raw(term, store)
+            except Exception as exc:
+                return finish(
+                    status=RetailerStatus.DEGRADED,
+                    store=store,
+                    reason=f"Search failed: {type(exc).__name__}: {exc}",
+                )
 
         products: list[NormalizedProduct] = []
         warnings: list[str] = []
@@ -372,9 +430,19 @@ class BaseRetailerConnector(ABC):
 
         status = RetailerStatus.ACTIVE
         reason = None
+        if self._fallback_reason:
+            # Never ACTIVE on fallback: the results are real records, but they are
+            # cached samples rather than anything observed just now.
+            status = RetailerStatus.DEGRADED
+            reason = (
+                f"{'Blocked by ' if blocked else 'Could not reach '}{self.name}"
+                f" - showing fixture data instead. {self._fallback_reason}"
+            )
         if warnings:
             status = RetailerStatus.DEGRADED
-            reason = f"{len(warnings)} of {len(raw_records)} records could not be parsed."
+            reason = reason or (
+                f"{len(warnings)} of {len(raw_records)} records could not be parsed."
+            )
         if not products:
             status = RetailerStatus.DEGRADED
             reason = reason or f"No usable results for '{term}'."

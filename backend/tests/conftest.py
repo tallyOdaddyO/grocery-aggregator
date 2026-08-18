@@ -20,18 +20,52 @@ from app.models import (  # noqa: E402
 )
 
 
+
+
+# --------------------------------------------------------------------------- #
+# Backend selection
+# --------------------------------------------------------------------------- #
+
+def test_database_url() -> str:
+    """Which database the schema-level fixtures build on.
+
+    Defaults to in-memory SQLite so the suite runs anywhere. Set
+    RETAILSCOUT_TEST_DB to a PostgreSQL URL to run the identical tests against
+    the production backend - which is how the JSONB and GIN paths get exercised,
+    since SQLite cannot express either.
+    """
+    return os.environ.get("RETAILSCOUT_TEST_DB", "sqlite+pysqlite:///:memory:")
+
+
+def make_engine():
+    """An engine for the configured test backend, with a clean schema."""
+    from sqlalchemy import create_engine, event
+    from sqlalchemy.pool import StaticPool
+
+    url = test_database_url()
+    if url.startswith("sqlite"):
+        engine = create_engine(
+            url, connect_args={"check_same_thread": False}, poolclass=StaticPool
+        )
+
+        @event.listens_for(engine, "connect")
+        def _fk_on(dbapi_conn, _rec):
+            cur = dbapi_conn.cursor()
+            cur.execute("PRAGMA foreign_keys=ON")
+            cur.close()
+    else:
+        engine = create_engine(url)
+
+    Base.metadata.drop_all(engine)
+    Base.metadata.create_all(engine)
+    return engine
+
+
 @pytest.fixture
 def engine():
-    eng = create_engine("sqlite+pysqlite:///:memory:")
-
-    @event.listens_for(eng, "connect")
-    def _fk_on(dbapi_conn, _rec):
-        cur = dbapi_conn.cursor()
-        cur.execute("PRAGMA foreign_keys=ON")
-        cur.close()
-
-    Base.metadata.create_all(eng)
+    eng = make_engine()
     yield eng
+    Base.metadata.drop_all(eng)
     eng.dispose()
 
 

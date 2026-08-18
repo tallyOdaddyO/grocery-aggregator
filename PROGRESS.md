@@ -3,8 +3,8 @@
 Append-only status file. Updated at the end of every phase so context is never lost.
 
 **Target ZIP:** 33009 (Hallandale Beach, FL)
-**Current phase:** 6 — Frontend & UI
-**Last updated:** 2026-08-18 (Phase 6 complete)
+**Current phase:** 7 — Live Integration & Workers
+**Last updated:** 2026-08-18 (Phase 7 complete)
 
 ---
 
@@ -15,8 +15,8 @@ Append-only status file. Updated at the end of every phase so context is never l
 | Python | 3.11.5 ✅ |
 | git | 2.39.2 ✅ |
 | Node / npm | ✅ v24.19.0 / npm 11.17.0 — installed 2026-08-18, see below |
-| PostgreSQL | ❌ not installed — dev/test uses SQLite; PG remains the production target |
-| Redis | ❌ not installed — workers (Phase 7) can be written but not executed locally |
+| PostgreSQL | ✅ 16.15 — user-local via conda, port 55432 (see below) |
+| Redis | ✅ 8.10.1 — user-local via conda, port 56379 |
 
 **Decision:** `DATABASE_URL` defaults to SQLite so Phases 2–5 are runnable and testable
 on this machine. The schema does **not** degrade to the lowest common denominator:

@@ -4,7 +4,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 
 import pytest
-from sqlalchemy import create_engine, inspect, select
+from sqlalchemy import create_engine, inspect, select, type_coerce
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.exc import IntegrityError, StatementError
 from sqlalchemy.schema import CreateIndex, CreateTable
@@ -14,6 +14,7 @@ from app.core.enums import (
     PriceProvenance, PROVENANCE_RANK, PromotionType, RetailerStatus,
 )
 from app.db.base import Base
+from app.db.types import JSONVariant
 from app.models import (
     Price, PriceObservation, Product, ProductVariant, Retailer, Store,
 )
@@ -54,12 +55,50 @@ class TestDialectPortability:
             sql = str(CreateIndex(i).compile(dialect=postgresql.dialect()))
             assert "USING gin" in sql
 
-    def test_gin_indexes_are_absent_on_sqlite(self, engine):
+    def test_gin_indexes_exist_only_where_the_backend_supports_them(self, engine):
+        """GIN on PostgreSQL, silently skipped on SQLite - same models either way."""
         insp = inspect(engine)
-        all_idx = {
+        created = {
             i["name"] for t in insp.get_table_names() for i in insp.get_indexes(t)
         }
-        assert not any("gin" in n for n in all_idx)
+        gin = {n for n in created if n and "gin" in n}
+
+        if engine.dialect.name == "postgresql":
+            assert gin == {"ix_products_attributes_gin", "ix_matches_signals_gin"}
+            # And they are really GIN, not B-tree indexes that merely got the name.
+            with engine.connect() as conn:
+                methods = dict(
+                    conn.exec_driver_sql(
+                        "select i.relname, am.amname from pg_index x "
+                        "join pg_class i on i.oid = x.indexrelid "
+                        "join pg_am am on am.oid = i.relam "
+                        "where i.relname like '%%_gin'"
+                    ).all()
+                )
+            assert set(methods.values()) == {"gin"}
+        else:
+            assert gin == set(), "SQLite has no GIN access method"
+
+    def test_jsonb_containment_is_queryable_on_postgres(self, db, engine):
+        """The reason the GIN indexes exist at all."""
+        if engine.dialect.name != "postgresql":
+            pytest.skip("JSONB containment is PostgreSQL-only")
+
+        db.add_all([
+            Product(normalized_name="organic milk", display_name="Organic Milk",
+                    attributes={"organic": True}),
+            Product(normalized_name="whole milk", display_name="Whole Milk",
+                    attributes={"organic": False}),
+        ])
+        db.commit()
+        rows = db.execute(
+            select(Product.display_name).where(
+                Product.attributes.op("@>")(  # noqa: S608 - parameterised below
+                    type_coerce({"organic": True}, JSONVariant)
+                )
+            )
+        ).scalars().all()
+        assert rows == ["Organic Milk"]
 
     def test_whole_schema_creates_on_sqlite(self, engine):
         assert len(inspect(engine).get_table_names()) == 9
